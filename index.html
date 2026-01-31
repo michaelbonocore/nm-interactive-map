@@ -395,25 +395,6 @@
             content: '⭐ ';
         }
 
-        /* Route Popup */
-        .route-popup {
-            padding: 12px;
-        }
-
-        .route-popup h3 {
-            font-size: 14px;
-            margin: 0 0 10px 0;
-        }
-
-        .route-popup .route-details {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .route-popup .route-details div {
-            margin: 4px 0;
-        }
-
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .sidebar {
@@ -429,11 +410,6 @@
                 max-width: 280px;
                 min-width: 250px;
             }
-        }
-
-        /* Route line style */
-        .route-line {
-            stroke-dasharray: 10, 10;
         }
     </style>
 </head>
@@ -464,7 +440,6 @@
                 <div><strong>Total Locations:</strong> <span id="totalLocations">0</span></div>
                 <div><strong>High Priority:</strong> <span id="highPriority">0</span></div>
                 <div><strong>Regions:</strong> 5</div>
-                <div><strong>Routes:</strong> 5</div>
             </div>
         </div>
     </div>
@@ -1385,64 +1360,6 @@
             }
         ];
 
-        const transportationRoutes = [
-            {
-                from: "Albuquerque (ABQ Airport)",
-                to: "Santa Fe",
-                fromCoords: [35.0402, -106.6090],
-                toCoords: [35.6870, -105.9378],
-                date: "Arrival Day",
-                mode: "Rental Car",
-                duration: "1 hour",
-                cost: "~$65/day + gas (~$15) = ~$80 USD",
-                notes: "Direct I-25 route. Consider stopping at 599 Relief Route Overlook for first landscape shots if arriving with good light."
-            },
-            {
-                from: "Santa Fe",
-                to: "Taos (via High Road)",
-                fromCoords: [35.6870, -105.9378],
-                toCoords: [36.4072, -105.5731],
-                date: "Day Trip",
-                mode: "Rental Car",
-                duration: "2-2.5 hours (scenic route with stops)",
-                cost: "Gas only (~$25)",
-                notes: "High Road to Taos passes through Chimayó, Truchas, Las Trampas. Multiple photo stops. Return via Low Road (NM-68) for different scenery and orchard views."
-            },
-            {
-                from: "Santa Fe",
-                to: "Ghost Ranch / Abiquiú",
-                fromCoords: [35.6870, -105.9378],
-                toCoords: [36.3322, -106.4722],
-                date: "Full Day Trip",
-                mode: "Rental Car",
-                duration: "1.5 hours each way",
-                cost: "Gas only (~$30)",
-                notes: "US-84 northwest. Stop at Plaza Blanca (verify access 48 hours ahead), Abiquiú village, Ghost Ranch. Pack lunch - limited food options."
-            },
-            {
-                from: "Santa Fe",
-                to: "Los Alamos (Fuller Lodge)",
-                fromCoords: [35.6870, -105.9378],
-                toCoords: [35.88, -106.30],
-                date: "Half Day Trip",
-                mode: "Rental Car",
-                duration: "45 minutes each way",
-                cost: "Gas only (~$15)",
-                notes: "NM-502. Can combine with White Rock Overlook and Valles Caldera if full day available."
-            },
-            {
-                from: "Santa Fe",
-                to: "Ojito Wilderness",
-                fromCoords: [35.6870, -105.9378],
-                toCoords: [35.48, -106.92],
-                date: "Half Day or Sunset Trip",
-                mode: "Rental Car",
-                duration: "1.5 hours each way",
-                cost: "Gas only (~$25)",
-                notes: "Dirt road access - high clearance vehicle recommended. Plan for no cell service. Bring water."
-            }
-        ];
-
         // =====================================================
         // MAP INITIALIZATION
         // =====================================================
@@ -1460,7 +1377,6 @@
         Object.keys(categories).forEach(cat => {
             markerLayers[cat] = L.layerGroup().addTo(map);
         });
-        const routeLayer = L.layerGroup().addTo(map);
 
         // =====================================================
         // MARKER CREATION FUNCTIONS
@@ -1580,22 +1496,8 @@
             `;
         }
 
-        function createRoutePopup(route) {
-            return `
-                <div class="route-popup">
-                    <h3>${route.from} → ${route.to}</h3>
-                    <div class="route-details">
-                        <div>🚗 <strong>${route.mode}:</strong> ${route.duration}</div>
-                        <div>💰 <strong>Cost:</strong> ${route.cost}</div>
-                        <div>📅 <strong>When:</strong> ${route.date}</div>
-                        <div style="margin-top: 8px;"><strong>Notes:</strong> ${route.notes}</div>
-                    </div>
-                </div>
-            `;
-        }
-
         // =====================================================
-        // ADD MARKERS AND ROUTES
+        // ADD MARKERS
         // =====================================================
 
         // Add regional overview markers
@@ -1614,18 +1516,6 @@
             });
             marker.bindPopup(createLocationPopup(loc), { maxWidth: 350 });
             marker.addTo(markerLayers[loc.category]);
-        });
-
-        // Add transportation routes
-        transportationRoutes.forEach(route => {
-            const polyline = L.polyline([route.fromCoords, route.toCoords], {
-                color: '#666',
-                weight: 3,
-                opacity: 0.7,
-                dashArray: '10, 10'
-            });
-            polyline.bindPopup(createRoutePopup(route), { maxWidth: 300 });
-            polyline.addTo(routeLayer);
         });
 
         // Fit map to all markers
