@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trail Camera: New Mexico - Land of Enchantment</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            position: absolute;
+            top: 10px;
+            left: 55px;
+            z-index: 1000;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            max-width: 280px;
+            max-height: calc(100vh - 20px);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            max-width: 44px;
+            max-height: 44px;
+        }
+
+        .sidebar-header {
+            background: #8B4513;
+            color: white;
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-header h1 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .sidebar-header .dates {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .sidebar.collapsed .sidebar-header h1,
+        .sidebar.collapsed .sidebar-header .dates {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-content {
+            padding: 12px;
+            overflow-y: auto;
+            max-height: calc(100vh - 100px);
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            display: none;
+        }
+
+        .legend-section {
+            margin-bottom: 15px;
+        }
+
+        .legend-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 12px;
+        }
+
+        .legend-item:hover {
+            background: #f5f5f5;
+        }
+
+        .legend-item.inactive {
+            opacity: 0.4;
+        }
+
+        .legend-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .legend-color.star {
+            border-radius: 0;
+            background: none !important;
+            border: none;
+            box-shadow: none;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .legend-label {
+            flex: 1;
+        }
+
+        .legend-count {
+            font-size: 10px;
+            color: #999;
+            margin-left: 5px;
+        }
+
+        .designation-item {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .designation-icon {
+            width: 20px;
+            margin-right: 8px;
+            text-align: center;
+        }
+
+        .stats-section {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .stats-section div {
+            margin: 3px 0;
+        }
+
+        /* Custom Markers */
+        .custom-marker {
+            background: white;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .marker-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .star-marker {
+            font-size: 24px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .marker-badges {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .marker-badge {
+            font-size: 10px;
+            background: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .priority-badge {
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            background: #8B4513;
+            color: white;
+            padding: 1px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        .priority-badge.low {
+            background: #888;
+        }
+
+        /* Popup Styles */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            padding: 0;
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            max-width: 320px;
+            min-width: 280px;
+        }
+
+        .popup-card {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .popup-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .popup-header h3 {
+            font-size: 16px;
+            margin: 0 0 4px 0;
+            color: #333;
+        }
+
+        .popup-header .badges {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .popup-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: #f0f0f0;
+        }
+
+        .popup-badge.priority-high {
+            background: #8B4513;
+            color: white;
+        }
+
+        .popup-badge.priority-low {
+            background: #ddd;
+            color: #666;
+        }
+
+        .popup-badge.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+
+        .popup-body {
+            padding: 12px 15px;
+        }
+
+        .popup-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .popup-meta div {
+            margin: 4px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .popup-meta .icon {
+            width: 20px;
+            flex-shrink: 0;
+        }
+
+        .popup-section {
+            margin: 12px 0;
+        }
+
+        .popup-section h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .popup-section p {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #444;
+            margin: 0;
+        }
+
+        .popup-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 8px 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #856404;
+        }
+
+        .popup-links {
+            display: flex;
+            gap: 8px;
+            padding: 12px 15px;
+            border-top: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .popup-link {
+            flex: 1;
+            text-align: center;
+            padding: 8px 12px;
+            background: #8B4513;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .popup-link:hover {
+            background: #6d360f;
+        }
+
+        .popup-link.secondary {
+            background: #666;
+        }
+
+        .popup-link.secondary:hover {
+            background: #555;
+        }
+
+        /* Regional Overview Popup */
+        .popup-header.regional {
+            background: linear-gradient(135deg, #ffc107, #ffdb4d);
+        }
+
+        .popup-header.regional h3 {
+            color: #333;
+        }
+
+        .popup-header.regional h3::before {
+            content: '⭐ ';
+        }
+
+        /* Route Popup */
+        .route-popup {
+            padding: 12px;
+        }
+
+        .route-popup h3 {
+            font-size: 14px;
+            margin: 0 0 10px 0;
+        }
+
+        .route-popup .route-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .route-popup .route-details div {
+            margin: 4px 0;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .sidebar {
+                left: 10px;
+                max-width: calc(100% - 70px);
+            }
+
+            .sidebar.collapsed {
+                max-width: 44px;
+            }
+
+            .leaflet-popup-content {
+                max-width: 280px;
+                min-width: 250px;
+            }
+        }
+
+        /* Route line style */
+        .route-line {
+            stroke-dasharray: 10, 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header" onclick="toggleSidebar()">
+            <div>
+                <h1>Trail Camera: New Mexico</h1>
+                <div class="dates">Feb 15 - Mar 31, 2026</div>
+            </div>
+            <button class="toggle-btn" id="toggleBtn">◀</button>
+        </div>
+        <div class="sidebar-content">
+            <div class="legend-section">
+                <h3>Categories</h3>
+                <div id="categoryLegend"></div>
+            </div>
+            <div class="legend-section">
+                <h3>Special Designations</h3>
+                <div class="designation-item"><span class="designation-icon">🏛️</span> UNESCO World Heritage</div>
+                <div class="designation-item"><span class="designation-icon">⚠️</span> Production Warning</div>
+                <div class="designation-item"><span class="designation-icon">🌸</span> Seasonal Highlight</div>
+                <div class="designation-item"><span class="designation-icon">🎨</span> O'Keeffe Connection</div>
+            </div>
+            <div class="stats-section" id="statsSection">
+                <div><strong>Total Locations:</strong> <span id="totalLocations">0</span></div>
+                <div><strong>High Priority:</strong> <span id="highPriority">0</span></div>
+                <div><strong>Regions:</strong> 5</div>
+                <div><strong>Routes:</strong> 5</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================
+        // DATA
+        // =====================================================
+
+        const projectInfo = {
+            title: "Trail Camera: New Mexico - Land of Enchantment",
+            dateRange: "February 15 - March 31, 2026",
+            brandColor: "#8B4513"
+        };
+
+        const categories = {
+            "Major Towns/Cities": { color: "#8B4513", description: "Primary cities and base locations" },
+            "Cultural & Historic Sites": { color: "#C75B39", description: "Churches, pueblos, historic locations" },
+            "Art Community Locations": { color: "#48A9A6", description: "Galleries, studios, museums, artist spaces" },
+            "Natural Features & Landscapes": { color: "#6B8E6B", description: "Mountains, gorges, badlands, scenic areas" },
+            "O'Keeffe Country": { color: "#D4A574", description: "Ghost Ranch, Abiquiú, locations tied to Georgia O'Keeffe" },
+            "People & Contacts": { color: "#7B68A6", description: "Artists, potential subjects, guides, collaborators" },
+            "Resources & Logistics": { color: "#888888", description: "Film office, airports, logistics support" },
+            "Regional Overview": { color: "#ffc107", icon: "star", description: "City/area summary markers" }
+        };
+
+        const categoryFilters = {};
+        Object.keys(categories).forEach(cat => categoryFilters[cat] = true);
+
+        const regionalOverviews = [
+            {
+                name: "Santa Fe Area",
+                coords: [35.6870, -105.9378],
+                dateRange: "Base of Operations",
+                locationCount: 22,
+                keyThemes: "Historic art colony, Canyon Road galleries, Museum Hill, third-largest US art market, lowrider culture connections",
+                logistics: "Central location for lodging; 1 hour from ABQ airport",
+                budget: "Primary lodging base - $600-900 for 6 nights"
+            },
+            {
+                name: "Taos Area",
+                coords: [36.4072, -105.5731],
+                dateRange: "Day trips or 2-3 night stay",
+                locationCount: 18,
+                keyThemes: "Rio Grande Gorge, Earthship community, historic art colony, San Francisco de Asís Mission (Taos Pueblo likely closed)",
+                logistics: "~1.5 hours from Santa Fe; consider overnight to maximize golden hour",
+                budget: "Optional overnight - $150-200/night"
+            },
+            {
+                name: "High Road to Taos",
+                coords: [36.0000, -105.7500],
+                dateRange: "En route Santa Fe ↔ Taos",
+                locationCount: 8,
+                keyThemes: "Chimayó pilgrimage, historic churches, mountain villages, Velarde/Dixon orchards (Feb-March blooms), Sangre de Cristo views",
+                logistics: "Scenic route between Santa Fe and Taos - plan full day",
+                budget: "Included in travel; pack lunch"
+            },
+            {
+                name: "O'Keeffe Country",
+                coords: [36.2700, -106.4000],
+                dateRange: "Full day trip from Santa Fe",
+                locationCount: 6,
+                keyThemes: "Ghost Ranch, Abiquiú, Plaza Blanca - following in O'Keeffe's footsteps, dramatic desert landscapes",
+                logistics: "~1.5 hours northwest of Santa Fe",
+                budget: "Day trip - gas + packed lunch + Ghost Ranch programs"
+            },
+            {
+                name: "Albuquerque Area",
+                coords: [35.0844, -106.6504],
+                dateRange: "Arrival/Departure + Weather Backup",
+                locationCount: 3,
+                keyThemes: "ABQ Sunport arrival, lowrider culture contacts (Rob Vanderslice), weather backup location",
+                logistics: "International airport; 1 hour to Santa Fe",
+                budget: "Transit costs; rental car pickup"
+            }
+        ];
+
+        const locations = [
+            {
+                name: "Santa Fe",
+                category: "Major Towns/Cities",
+                region: "Santa Fe Area",
+                coords: [35.6870, -105.9378],
+                dates: "Base throughout production",
+                bestTime: "Golden hour",
+                admission: "N/A",
+                permits: "Small crews on public land generally need no permits",
+                keyFeatures: "Capital of New Mexico, third-largest art market in the United States. Intersection of indigenous culture, Spanish colonial heritage, and thriving contemporary art scene.",
+                productionNotes: "Very film-friendly city. Adobe architecture, narrow streets, galleries everywhere. Visual character is warm earth tones and dramatic light on adobe.",
+                googleMaps: "https://maps.google.com/?q=Santa+Fe+NM",
+                priority: "High"
+            },
+            {
+                name: "Taos",
+                category: "Major Towns/Cities",
+                region: "Taos Area",
+                coords: [36.4072, -105.5731],
+                dates: "Day trips or overnight",
+                bestTime: "Golden hour, plaza at midday",
+                admission: "N/A",
+                permits: "No - public areas",
+                keyFeatures: "Historic art colony, gateway to Taos Pueblo. Artists have gathered here for over a century; vibrant gallery scene.",
+                productionNotes: "Mountain town feel, mix of pueblo and Spanish colonial architecture. Plaza scenes, galleries, mountain backdrop, artist community.",
+                googleMaps: "https://maps.google.com/?q=Taos+NM",
+                priority: "High"
+            },
+            {
+                name: "Albuquerque",
+                category: "Major Towns/Cities",
+                region: "Albuquerque Area",
+                coords: [35.0844, -106.6504],
+                dates: "Arrival/Departure",
+                bestTime: "N/A",
+                admission: "N/A",
+                permits: "N/A",
+                keyFeatures: "Largest city in New Mexico; arrival point and weather backup. International airport (ABQ), 1 hour from Santa Fe.",
+                productionNotes: "Potential backup location if weather fails in Santa Fe/Taos area. Rob Vanderslice lowrider painter contact here.",
+                googleMaps: "https://maps.google.com/?q=Albuquerque+NM",
+                priority: "Low"
+            },
+            {
+                name: "Santa Fe Plaza",
+                category: "Cultural & Historic Sites",
+                region: "Santa Fe Area",
+                coords: [35.6872, -105.9375],
+                dates: "Multiple visits",
+                bestTime: "Golden hour, early evening",
+                admission: "Free",
+                permits: "No - public, no permits for small crews",
+                keyFeatures: "Historic heart of Santa Fe since 1610. Center of public life for 400+ years; Native American artists sell jewelry under the portal of the Palace of the Governors.",
+                productionNotes: "Street scenes, Native artisans, architecture, evening atmosphere. Essential B-roll location.",
+                googleMaps: "https://maps.google.com/?q=Santa+Fe+Plaza",
+                priority: "High"
+            },
+            {
+                name: "Loretto Chapel",
+                category: "Cultural & Historic Sites",
+                region: "Santa Fe Area",
+                coords: [35.6856, -105.9372],
+                dates: "Morning visit",
+                bestTime: "Morning (less crowded)",
+                admission: "~$5 USD",
+                permits: "Yes - check filming permissions",
+                keyFeatures: "Gothic Revival chapel famous for its \"Miraculous Staircase.\" The spiral staircase has no central support - an architectural mystery that's drawn visitors for over a century.",
+                productionNotes: "Architecture focus, the famous staircase, interior details. Contact for commercial filming permission.",
+                googleMaps: "https://maps.google.com/?q=Loretto+Chapel+Santa+Fe",
+                priority: "Low"
+            },
+            {
+                name: "Cathedral Basilica of St. Francis of Assisi",
+                category: "Cultural & Historic Sites",
+                region: "Santa Fe Area",
+                coords: [35.6868, -105.9365],
+                dates: "Morning",
+                bestTime: "Morning light on facade",
+                admission: "Free, donations welcome",
+                permits: "No for exterior",
+                keyFeatures: "Romanesque Revival cathedral, completed 1886. Landmark of Santa Fe's Spanish colonial and Catholic heritage.",
+                productionNotes: "Exterior adobe/stone contrast, interior, stained glass. Good establishing shot near Plaza.",
+                googleMaps: "https://maps.google.com/?q=Cathedral+Basilica+St+Francis+Santa+Fe",
+                priority: "Low"
+            },
+            {
+                name: "El Santuario de Chimayó",
+                category: "Cultural & Historic Sites",
+                region: "High Road to Taos",
+                coords: [35.9917, -105.9469],
+                dates: "Morning visit",
+                bestTime: "Morning",
+                admission: "Free",
+                permits: "EXTERIOR ONLY - interior filming STRICTLY PROHIBITED",
+                keyFeatures: "Adobe church known as the \"Lourdes of America.\" Major pilgrimage site; believers come for the \"holy dirt\" said to have healing properties. 300,000+ pilgrims visit annually.",
+                productionNotes: "CRITICAL: Interior filming (especially the \"pocito\" room of holy dirt) is STRICTLY PROHIBITED and enforced. Focus on exterior narrative: pilgrim arrivals, courtyard details, adobe textures.",
+                googleMaps: "https://maps.google.com/?q=El+Santuario+de+Chimayo",
+                priority: "High",
+                warning: true
+            },
+            {
+                name: "San José de Gracia Church (Las Trampas)",
+                category: "Cultural & Historic Sites",
+                region: "High Road to Taos",
+                coords: [36.0103, -105.7533],
+                dates: "Afternoon on High Road drive",
+                bestTime: "Afternoon",
+                admission: "Small donation expected",
+                permits: "Check local access",
+                keyFeatures: "One of the finest examples of Spanish colonial church architecture in the US. Built in 1760, the original construction is remarkably preserved.",
+                productionNotes: "Adobe exterior, hand-carved wooden interior, mountain village setting. A living connection to 18th-century New Mexico.",
+                googleMaps: "https://maps.google.com/?q=San+Jose+de+Gracia+Las+Trampas",
+                priority: "Low"
+            },
+            {
+                name: "Taos Pueblo",
+                category: "Cultural & Historic Sites",
+                region: "Taos Area",
+                coords: [36.4386, -105.5447],
+                dates: "LIKELY CLOSED",
+                bestTime: "N/A",
+                admission: "$16 adult; $6 camera fee for personal use",
+                permits: "Yes - REQUIRES ADVANCE TRIBAL PERMISSION for professional filming",
+                keyFeatures: "UNESCO World Heritage Site; continuously inhabited for over 1,000 years. The multi-story adobe buildings are among the oldest continuously inhabited structures in North America.",
+                productionNotes: "CRITICAL: LIKELY CLOSED for entire Feb-March production window (annual winter closure mid-February through early April for ceremonies). The crew CANNOT rely on the classic \"Taos Pueblo\" shot. Use San Francisco de Asís Mission Church as alternative.",
+                googleMaps: "https://maps.google.com/?q=Taos+Pueblo",
+                priority: "High",
+                unesco: true,
+                warning: true
+            },
+            {
+                name: "Truchas",
+                category: "Cultural & Historic Sites",
+                region: "High Road to Taos",
+                coords: [35.9806, -105.7697],
+                dates: "High Road drive",
+                bestTime: "Midday (sun clears the mountains)",
+                admission: "Free",
+                permits: "No - public roads; respect private property",
+                keyFeatures: "Traditional mountain village on the High Road to Taos. Filming location for Robert Redford's \"The Milagro Beanfield War\" (1988).",
+                productionNotes: "Mountain village vignettes, traditional architecture, Sangre de Cristo views. Authentic northern New Mexico village life.",
+                googleMaps: "https://maps.google.com/?q=Truchas+NM",
+                priority: "Low"
+            },
+            {
+                name: "San Francisco de Asís Mission Church",
+                category: "Cultural & Historic Sites",
+                region: "Taos Area",
+                coords: [36.36, -105.59],
+                dates: "Evening for best light",
+                bestTime: "Warm evening light",
+                admission: "Free exterior",
+                permits: "No - exterior accessible year-round",
+                keyFeatures: "Massive adobe mission church in Ranchos de Taos with iconic sculptural buttresses. Favorite subject of both Ansel Adams and Georgia O'Keeffe.",
+                productionNotes: "PRIMARY ALTERNATIVE to Taos Pueblo which will likely be CLOSED. Classic buttress compositions, warm sunset light on adobe, stormy sky drama, Ansel Adams/O'Keeffe homage shots.",
+                googleMaps: "https://maps.google.com/?q=San+Francisco+de+Asis+Ranchos+de+Taos",
+                priority: "High",
+                okeeffe: true
+            },
+            {
+                name: "Greater World Earthship Community",
+                category: "Cultural & Historic Sites",
+                region: "Taos Area",
+                coords: [36.48, -105.67],
+                dates: "Morning or afternoon",
+                bestTime: "Blue hour for bottle-wall interiors; midday for greenhouse light",
+                admission: "Visitor Center fee ~$10",
+                permits: "Contact Pangea Builders or Earthship Academy for production-level access to inhabited home",
+                keyFeatures: "Off-grid sustainable housing community founded by architect Michael Reynolds. \"Systems Fiction made real.\" Structures built from tires, cans, bottles, and adobe.",
+                productionNotes: "Glass bottle walls filtering colored light, lush internal greenhouses vs. desert exterior, organic curved interiors, jungle-like greenhouses in February snow. Story angle: living off-grid reality - catching water, growing food in greenhouses during winter.",
+                googleMaps: "https://maps.google.com/?q=Earthship+Visitor+Center+Taos",
+                priority: "High"
+            },
+            {
+                name: "Arroyo Seco",
+                category: "Cultural & Historic Sites",
+                region: "Taos Area",
+                coords: [36.51, -105.57],
+                dates: "En route to Taos Ski Valley",
+                bestTime: "Midday",
+                admission: "Free",
+                permits: "No",
+                keyFeatures: "Quirky village near Taos Ski Valley. Authentic northern New Mexico village vibe with local character.",
+                productionNotes: "Village character shots, local color, mountain backdrop. Good lunch stop.",
+                googleMaps: "https://maps.google.com/?q=Arroyo+Seco+NM",
+                priority: "Low"
+            },
+            {
+                name: "San Juan Nepomuceno Church",
+                category: "Cultural & Historic Sites",
+                region: "High Road to Taos",
+                coords: [36.05, -105.80],
+                dates: "High Road drive",
+                bestTime: "Morning light on east-facing facade",
+                admission: "Free",
+                permits: "No - respectful photography expected",
+                keyFeatures: "Historic adobe church in Llano San Juan on the High Road. Less visited than Chimayó but equally photogenic.",
+                productionNotes: "Classic adobe church exterior, mountain backdrop, village atmosphere, rustic cemetery with carved wooden crosses. Alternative Taos Pueblo replacement shot.",
+                googleMaps: "https://maps.google.com/?q=San+Juan+Nepomuceno+Church+NM",
+                priority: "Low"
+            },
+            {
+                name: "Santa Clara Pueblo",
+                category: "Cultural & Historic Sites",
+                region: "Santa Fe Area",
+                coords: [35.97, -106.09],
+                dates: "By arrangement",
+                bestTime: "Varies",
+                admission: "Puye Cliff Dwellings has fee",
+                permits: "Yes - Contact Santa Clara Tourism for photography permissions",
+                keyFeatures: "Tewa-speaking pueblo known for distinctive black pottery tradition. Home to world-renowned potters including the Naranjo, Swentzell, and Tafoya families.",
+                productionNotes: "Pottery demonstrations (with permission), Puye Cliff Dwellings, pueblo architecture. Home to several world-renowned potters who may be interview subjects.",
+                googleMaps: "https://maps.google.com/?q=Santa+Clara+Pueblo+NM",
+                priority: "High"
+            },
+            {
+                name: "Millicent Rogers Museum",
+                category: "Cultural & Historic Sites",
+                region: "Taos Area",
+                coords: [36.43, -105.57],
+                dates: "Any day",
+                bestTime: "Morning interior light",
+                admission: "~$12 USD",
+                permits: "Check filming permissions in advance",
+                keyFeatures: "Museum showcasing Native American and Hispanic art, including Maria Martinez pottery. Houses one of the most significant collections of Southwestern art and jewelry.",
+                productionNotes: "World-class pottery collections, traditional jewelry, Hispanic devotional art, museum grounds with mountain views. Context for understanding the artistic traditions that inspire contemporary makers.",
+                googleMaps: "https://maps.google.com/?q=Millicent+Rogers+Museum+Taos",
+                priority: "High"
+            },
+            {
+                name: "Canyon Road Galleries",
+                category: "Art Community Locations",
+                region: "Santa Fe Area",
+                coords: [35.6784, -105.9285],
+                dates: "Multiple visits; Friday evening for openings",
+                bestTime: "Late morning through evening; Friday openings especially vibrant",
+                admission: "Free to browse",
+                permits: "Yes - individual gallery permission needed for interior commercial filming",
+                keyFeatures: "Half-mile stretch with 100+ galleries, studios, and restaurants. The heart of Santa Fe's art scene. Third-largest art market in the US after New York and LA.",
+                productionNotes: "Gallery interiors, artists at work, art displays, street scenes, evening openings. Gallery owners can speak to the creative community's history.",
+                googleMaps: "https://maps.google.com/?q=Canyon+Road+Santa+Fe",
+                priority: "High"
+            },
+            {
+                name: "Taos Plaza Galleries",
+                category: "Art Community Locations",
+                region: "Taos Area",
+                coords: [36.4075, -105.5728],
+                dates: "Any day",
+                bestTime: "Midday through evening",
+                admission: "Free to browse",
+                permits: "Public plaza; individual gallery permissions for interiors",
+                keyFeatures: "Historic plaza surrounded by galleries and artist studios. Taos has been an art colony since the early 1900s. The Taos Society of Artists put this region on the map.",
+                productionNotes: "Gallery browsing, artist interviews, plaza atmosphere. Local artists and gallery owners available.",
+                googleMaps: "https://maps.google.com/?q=Taos+Plaza",
+                priority: "High"
+            },
+            {
+                name: "Museum Hill",
+                category: "Art Community Locations",
+                region: "Santa Fe Area",
+                coords: [35.6686, -105.9220],
+                dates: "Any day",
+                bestTime: "Morning",
+                admission: "Varies by museum",
+                permits: "Check individual museum filming policies",
+                keyFeatures: "Campus of four museums focused on Native American and folk art. Includes Museum of Indian Arts & Culture, Museum of International Folk Art.",
+                productionNotes: "Museum exteriors, cultural context, exhibits (with permission). Context for understanding New Mexico's artistic traditions.",
+                googleMaps: "https://maps.google.com/?q=Museum+Hill+Santa+Fe",
+                priority: "Low"
+            },
+            {
+                name: "Fuller Lodge Art Center (Los Alamos)",
+                category: "Art Community Locations",
+                region: "Santa Fe Area",
+                coords: [35.88, -106.30],
+                dates: "Day trip",
+                bestTime: "Midday interior light",
+                admission: "Free",
+                permits: "Check with center",
+                keyFeatures: "Massive Ponderosa pine log structure, hub for Los Alamos scientist-artist community. The \"Atomic City\" has highest concentration of PhDs per capita.",
+                productionNotes: "Warm woody interior (distinct from adobe), artist works, architectural details of historic log building. Story angle: \"Atomic Artists\" - how does a mind that calculates blast radiuses interpret the landscape?",
+                googleMaps: "https://maps.google.com/?q=Fuller+Lodge+Art+Center+Los+Alamos",
+                priority: "High"
+            },
+            {
+                name: "El Rito (Nicholas Herrera's Studio)",
+                category: "Art Community Locations",
+                region: "O'Keeffe Country",
+                coords: [36.32, -106.18],
+                dates: "By arrangement",
+                bestTime: "Midday for yard; any time for studio",
+                admission: "N/A",
+                permits: "Arrange studio visit in advance",
+                keyFeatures: "Studio compound of renowned santero Nicholas Herrera. A sprawling \"curated junkyard\" of vintage cars, woodpiles, half-finished altars, and rusted metal.",
+                productionNotes: "Artist at work (chainsaw carving), vintage lowriders ('39 Chevy, '48 Chevy) in dusty yard, studio chaos, finished santos and social commentary pieces. Linked to Nicholas Herrera contact.",
+                googleMaps: "https://maps.google.com/?q=El+Rito+NM",
+                priority: "High"
+            },
+            {
+                name: "Low Low's Lowrider Art Place (Chimayó)",
+                category: "Art Community Locations",
+                region: "Santa Fe Area",
+                coords: [35.99, -105.94],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Contact Medina family",
+                keyFeatures: "Lowrider culture museum/gallery run by the Medina family. The historians and elders of lowrider culture.",
+                productionNotes: "Lowrider displays, interviews with cultural historians, \"New Mexico Noir\" aesthetic. Joan Medina offers vital counter-narrative - role of women as owners and creators, not just models.",
+                googleMaps: "https://maps.google.com/?q=Chimayo+NM",
+                priority: "High"
+            },
+            {
+                name: "Dwan Light Sanctuary",
+                category: "Art Community Locations",
+                region: "Santa Fe Area",
+                coords: [35.46, -105.93],
+                dates: "Midday for best prism effects",
+                bestTime: "Midday for most dramatic prism effects; sunrise/sunset for softer color",
+                admission: "Free",
+                permits: "Open to public; located on UWC campus",
+                keyFeatures: "Light-based art installation at the United World College campus near Lamy. A 12-sided structure featuring prismatic apertures that project rainbows across the white interior walls.",
+                productionNotes: "Rainbow prism projections on white walls, architectural geometry, light studies at different times of day, contemplative atmosphere. Perfect meta-subject: a building designed to celebrate the very light that draws artists to New Mexico.",
+                googleMaps: "https://maps.google.com/?q=Dwan+Light+Sanctuary+Montezuma+NM",
+                priority: "High"
+            },
+            {
+                name: "Tower Gallery",
+                category: "Art Community Locations",
+                region: "Taos Area",
+                coords: [36.41, -105.57],
+                dates: "Any day",
+                bestTime: "Any time",
+                admission: "Free",
+                permits: "Check for filming permission",
+                keyFeatures: "Contemporary art gallery in converted water tower structure. Unique architectural space housing contemporary Taos artists.",
+                productionNotes: "Unique gallery architecture, contemporary art displays, artist interviews. The circular structure provides interesting interior geometry.",
+                googleMaps: "https://maps.google.com/?q=Tower+Gallery+Taos",
+                priority: "Low"
+            },
+            {
+                name: "Santa Fe Railyard Arts District",
+                category: "Art Community Locations",
+                region: "Santa Fe Area",
+                coords: [35.68, -105.95],
+                dates: "Friday evening or Saturday morning",
+                bestTime: "Friday evenings for gallery openings; Saturday mornings for farmers market",
+                admission: "Free",
+                permits: "Individual gallery permissions for interior filming",
+                keyFeatures: "Revitalized industrial area now home to contemporary galleries and the farmers market. Represents Santa Fe's contemporary art scene.",
+                productionNotes: "Contemporary gallery spaces, industrial-meets-art architecture, Saturday farmers market, art openings. Santa Fe's contemporary counterpoint to historic Canyon Road.",
+                googleMaps: "https://maps.google.com/?q=Santa+Fe+Railyard+District",
+                priority: "Low"
+            },
+            {
+                name: "Rio Grande Gorge Bridge",
+                category: "Natural Features & Landscapes",
+                region: "Taos Area",
+                coords: [36.4531, -105.7389],
+                dates: "Golden hour visit",
+                bestTime: "Golden hour (either morning or evening)",
+                admission: "Free",
+                permits: "No - public viewing areas",
+                keyFeatures: "Steel deck arch bridge spanning the Rio Grande Gorge, 650 feet above the river. Dramatic engineering set against vast landscape.",
+                productionNotes: "Bridge architecture, gorge depth, vast desert plateau, dramatic skies. The gorge was carved over millions of years.",
+                googleMaps: "https://maps.google.com/?q=Rio+Grande+Gorge+Bridge",
+                priority: "High"
+            },
+            {
+                name: "Sangre de Cristo Mountains",
+                category: "Natural Features & Landscapes",
+                region: "High Road to Taos",
+                coords: [36.0000, -105.5000],
+                dates: "Throughout production",
+                bestTime: "Sunrise and sunset for the famous red glow",
+                admission: "Free",
+                permits: "No",
+                keyFeatures: "Southernmost subrange of the Rocky Mountains. The name means \"Blood of Christ\" - referring to the red alpenglow on the peaks at sunrise and sunset.",
+                productionNotes: "Mountain vistas, alpenglow, backdrop for village scenes, high desert contrast. Best viewing from High Road to Taos, Truchas, Taos area.",
+                googleMaps: "https://maps.google.com/?q=Sangre+de+Cristo+Mountains",
+                priority: "High"
+            },
+            {
+                name: "High Desert Landscape",
+                category: "Natural Features & Landscapes",
+                region: "Santa Fe Area",
+                coords: [35.5000, -106.0000],
+                dates: "Throughout production",
+                bestTime: "Golden hour",
+                admission: "Free",
+                permits: "No",
+                keyFeatures: "The characteristic New Mexico landscape - piñon and juniper, vast skies, dramatic light. 7,000+ feet elevation creates unique atmospheric conditions.",
+                productionNotes: "Vast skies, dramatic clouds, golden hour magic, weather drama. The \"legendary New Mexico light\" - photographers have chased it for a century.",
+                googleMaps: "https://maps.google.com/?q=Santa+Fe+NM",
+                priority: "Low"
+            },
+            {
+                name: "Nambé Badlands",
+                category: "Natural Features & Landscapes",
+                region: "Santa Fe Area",
+                coords: [35.89, -105.95],
+                dates: "Sunset",
+                bestTime: "Sunset - golden hour hits the red walls dramatically",
+                admission: "Free",
+                permits: "No - BLM land",
+                keyFeatures: "\"Mini-Moab\" red rock badlands just 20 minutes north of Santa Fe. Tesuque Formation sandstone and siltstone creates intimate, enclosed, textural landscape.",
+                productionNotes: "Textural shots of eroded formations, shadow play in low sun, telephoto compression of layered geology. DRONE ALLOWED (BLM land, outside Wilderness boundary). A dramatic Southwest backdrop without the 3-4 hour drive to Bisti.",
+                googleMaps: "https://maps.google.com/?q=Nambe+Badlands+NM",
+                priority: "High",
+                drone: true
+            },
+            {
+                name: "Velarde Orchards (Fruit Basket Corridor)",
+                category: "Natural Features & Landscapes",
+                region: "High Road to Taos",
+                coords: [36.15, -105.98],
+                dates: "Late Feb - Late March (bloom timing)",
+                bestTime: "Golden hour; pre-dawn for frost drama",
+                admission: "Free",
+                permits: "No - road elevation allows shooting across canopy",
+                keyFeatures: "Stone fruit orchard corridor along NM-68, known as the \"Fruit Basket.\" The most reliable and cinematically potent botanical subject for Feb-March.",
+                productionNotes: "Orchard canopy shots toward foothills, bloom compression against arid background, \"Watch nights\" with farmers using heaters/wind machines. Late Feb (apricots), Early-Mid March (plums), Mid-Late March (apples). Story angle: \"False Spring\" threatens blooms with late frosts.",
+                googleMaps: "https://maps.google.com/?q=Velarde+NM",
+                priority: "High",
+                seasonal: true
+            },
+            {
+                name: "Dixon Orchards",
+                category: "Natural Features & Landscapes",
+                region: "High Road to Taos",
+                coords: [36.21, -105.91],
+                dates: "Mid-to-late March for apple blossoms",
+                bestTime: "Pre-dawn for frost drama; golden hour",
+                admission: "Free",
+                permits: "No",
+                keyFeatures: "Heritage apple and stone fruit orchards with generational farming story. Dixon's Apple Orchard recovered from Las Conchas fire and flooding.",
+                productionNotes: "Frost-threatened orchard at dawn, smoke from heaters, frantic farmer activity, apple blossoms with pink-veined white petals. Story angle: \"Story behind the shot\" - human element of botanical photography.",
+                googleMaps: "https://maps.google.com/?q=Dixon+NM",
+                priority: "High",
+                seasonal: true
+            },
+            {
+                name: "Orilla Verde Recreation Area",
+                category: "Natural Features & Landscapes",
+                region: "Taos Area",
+                coords: [36.30, -105.77],
+                dates: "Any day",
+                bestTime: "Golden hour; ND filters for water",
+                admission: "Day-use fee",
+                permits: "No",
+                keyFeatures: "River-level access to the Rio Grande Gorge near Pilar. Instead of looking down 650 feet, you're at the bottom looking UP at 800-foot basalt walls.",
+                productionNotes: "Long-exposure water photography (ND filters), jagged basalt against smooth water, willows turning gold/green in March. Best technique: long exposures with ND filters. The spot: confluence near Taos Junction Bridge.",
+                googleMaps: "https://maps.google.com/?q=Orilla+Verde+Recreation+Area",
+                priority: "High"
+            },
+            {
+                name: "Ojito Wilderness / White Ridge Bike Trails",
+                category: "Natural Features & Landscapes",
+                region: "Santa Fe Area",
+                coords: [35.48, -106.92],
+                dates: "Blue hour or night",
+                bestTime: "Blue hour or astrophotography (Dark Sky territory)",
+                admission: "Free",
+                permits: "No",
+                keyFeatures: "Yellow/white gypsum mesas with massive hoodoos and petrified wood - \"moonscape\" aesthetic. Rare gypsum-loving milkvetches bloom here in March.",
+                productionNotes: "Expansive lonely landscapes, hoodoo formations, rare botanical subjects, astrophotography. DRONE ALLOWED at White Ridge Bike Trails (outside Wilderness boundary). ~1.5 hours southwest of Santa Fe. Dirt road, high clearance vehicle recommended.",
+                googleMaps: "https://maps.google.com/?q=Ojito+Wilderness+NM",
+                priority: "High",
+                drone: true
+            },
+            {
+                name: "599 Relief Route Overlook",
+                category: "Natural Features & Landscapes",
+                region: "Santa Fe Area",
+                coords: [35.72, -106.02],
+                dates: "March - lenticular season",
+                bestTime: "Any time clouds are forming; time-lapse",
+                admission: "Free",
+                permits: "No - highway pullover",
+                keyFeatures: "Highway bypass with expansive views of the entire Sangre de Cristo range. PRIME location for capturing lenticular clouds.",
+                productionNotes: "Wide-angle time-lapse of lenticular \"stacks\", mountain panorama, dramatic cloud formations. Best technique: time-lapse at 2-5 second intervals reveals the dynamic \"surfing\" motion. March is statistically the windiest month. Lenticular clouds are the \"holy grail\" of atmospheric photography.",
+                googleMaps: "https://maps.google.com/?q=NM-599+Santa+Fe",
+                priority: "High"
+            },
+            {
+                name: "Taos Valley Overlook",
+                category: "Natural Features & Landscapes",
+                region: "Taos Area",
+                coords: [36.35, -105.63],
+                dates: "Morning or evening",
+                bestTime: "Sunrise/sunset for drama and lenticulars",
+                admission: "Free",
+                permits: "No - roadside pullout",
+                keyFeatures: "Overlook on NM-68 before dropping into Taos valley. Iconic view of Taos Mountain - potential for \"stack\" of 3-4 lenticular plates hovering over the sacred mountain.",
+                productionNotes: "Mountain with lenticular formations, valley panorama, sunset/sunrise drama. Bucket-list shot for landscape photographers.",
+                googleMaps: "https://maps.google.com/?q=Taos+Valley+Overlook",
+                priority: "High"
+            },
+            {
+                name: "White Rock Overlook",
+                category: "Natural Features & Landscapes",
+                region: "Santa Fe Area",
+                coords: [35.83, -106.21],
+                dates: "Late March for cactus buds",
+                bestTime: "Any time",
+                admission: "Free",
+                permits: "No",
+                keyFeatures: "East-facing overlook across Rio Grande. Composition that ties hydrological and atmospheric narratives together.",
+                productionNotes: "Layered landscape compositions, river and mountain vista. Bonus: Claret Cup Cactus begins showing crimson buds here in late March.",
+                googleMaps: "https://maps.google.com/?q=White+Rock+Overlook+NM",
+                priority: "Low"
+            },
+            {
+                name: "Valles Caldera",
+                category: "Natural Features & Landscapes",
+                region: "Santa Fe Area",
+                coords: [35.87, -106.52],
+                dates: "Morning for elk",
+                bestTime: "Early morning for elk herds",
+                admission: "Day-use fee",
+                permits: "No",
+                keyFeatures: "Massive volcanic caldera with grassland valley floor. Elk herds against snowy caldera rim create classic wildlife-landscape compositions.",
+                productionNotes: "Telephoto shots of elk herds, snow-covered rim, vast grassland. Best technique: long telephoto (100-400mm) for wildlife compression.",
+                googleMaps: "https://maps.google.com/?q=Valles+Caldera+National+Preserve",
+                priority: "Low"
+            },
+            {
+                name: "Wild Rivers Recreation Area",
+                category: "Natural Features & Landscapes",
+                region: "Taos Area",
+                coords: [36.67, -105.69],
+                dates: "Golden hour or night",
+                bestTime: "Golden hour for warm light on canyon walls; night for astrophotography",
+                admission: "Day-use fee",
+                permits: "No",
+                keyFeatures: "Dramatic confluence of Red River and Rio Grande in deep volcanic gorge. More intimate and less visited than the Gorge Bridge.",
+                productionNotes: "Dramatic canyon depth views, river confluence patterns, volcanic rock textures, dark sky astrophotography, bighorn sheep wildlife. DRONE ALLOWED (BLM land). Trails descend to river.",
+                googleMaps: "https://maps.google.com/?q=Wild+Rivers+Recreation+Area",
+                priority: "High",
+                drone: true
+            },
+            {
+                name: "John Dunn Bridge",
+                category: "Natural Features & Landscapes",
+                region: "Taos Area",
+                coords: [36.43, -105.73],
+                dates: "Any day",
+                bestTime: "ND filters for water shots",
+                admission: "Free",
+                permits: "No - public road access",
+                keyFeatures: "Historic bridge crossing Rio Grande at river level north of Taos. River-level perspective of the Rio Grande Gorge.",
+                productionNotes: "River-level gorge perspective, long-exposure water photography, bridge architecture against canyon walls. Best technique: ND filters for silky water against sharp basalt.",
+                googleMaps: "https://maps.google.com/?q=John+Dunn+Bridge+Taos",
+                priority: "Low"
+            },
+            {
+                name: "Taos Ski Valley",
+                category: "Natural Features & Landscapes",
+                region: "Taos Area",
+                coords: [36.60, -105.45],
+                dates: "Event dates if possible",
+                bestTime: "Sunset alpenglow on surrounding peaks",
+                admission: "Lift tickets for mountain access; village is public",
+                permits: "No for public areas",
+                keyFeatures: "World-class ski resort in the Sangre de Cristo Mountains. The local \"ridge rat\" teen culture of hiking Kachina Peak represents authentic Taos mountain lifestyle.",
+                productionNotes: "Alpine mountain scenery, chairlift-accessible high-elevation views, alpenglow on Wheeler Peak, local ski culture, village atmosphere. Events: Taos Winter Freeride (Feb), Torchlight Parade, Slush Cup (spring).",
+                googleMaps: "https://maps.google.com/?q=Taos+Ski+Valley",
+                priority: "Low"
+            },
+            {
+                name: "Ghost Ranch",
+                category: "O'Keeffe Country",
+                region: "O'Keeffe Country",
+                coords: [36.3322, -106.4722],
+                dates: "Full day trip",
+                bestTime: "Golden hour transforms the cliffs",
+                admission: "Varies by program",
+                permits: "Public areas accessible; retreat center has visitor programs",
+                keyFeatures: "21,000-acre retreat center in the Chama River Valley. Georgia O'Keeffe's most famous inspiration. She said: \"It's my private mountain. God told me if I painted it enough, I could have it.\"",
+                productionNotes: "Iconic cliffs (Cerro Pedernal, Kitchen Mesa), desert landscapes, O'Keeffe's visual vocabulary. ~1.5 hours from Santa Fe.",
+                googleMaps: "https://maps.google.com/?q=Ghost+Ranch+Abiquiu",
+                priority: "High",
+                okeeffe: true
+            },
+            {
+                name: "Abiquiú",
+                category: "O'Keeffe Country",
+                region: "O'Keeffe Country",
+                coords: [36.2089, -106.3192],
+                dates: "Full day trip",
+                bestTime: "Any time",
+                admission: "O'Keeffe home tours ~$40-65",
+                permits: "O'Keeffe home tours require advance booking through Georgia O'Keeffe Museum",
+                keyFeatures: "Small village where Georgia O'Keeffe lived and worked for decades. She moved permanently in 1949 and lived here until her death in 1986.",
+                productionNotes: "Village scenes, O'Keeffe home exterior, surrounding landscape. Her actual studio and home - powerful connection to art history.",
+                googleMaps: "https://maps.google.com/?q=Abiquiu+NM",
+                priority: "High",
+                okeeffe: true
+            },
+            {
+                name: "Plaza Blanca (The White Place)",
+                category: "O'Keeffe Country",
+                region: "O'Keeffe Country",
+                coords: [36.28, -106.32],
+                dates: "Any day - VERIFY ACCESS 48 HOURS IN ADVANCE",
+                bestTime: "Usable even at midday due to reflective qualities",
+                admission: "Free",
+                permits: "Access through Dar Al Islam grounds - policies can change",
+                keyFeatures: "Towering white limestone cliffs near Abiquiú - one of Georgia O'Keeffe's favorite subjects. The white rock acts as a giant natural reflector.",
+                productionNotes: "VERIFY STATUS 48 HOURS IN ADVANCE as access policies can change. High-key landscape photography, portrait work with natural fill light, O'Keeffe-inspired compositions. Backup: Ghost Ranch Kitchen Mesa trail offers similar varicolored cliffs.",
+                googleMaps: "https://maps.google.com/?q=Plaza+Blanca+Abiquiu",
+                priority: "High",
+                okeeffe: true,
+                warning: true
+            },
+            {
+                name: "Abiquiú Lake",
+                category: "O'Keeffe Country",
+                region: "O'Keeffe Country",
+                coords: [36.24, -106.42],
+                dates: "Early morning",
+                bestTime: "Early morning for calm water reflections; sunset for warm cliff colors",
+                admission: "Day-use fee",
+                permits: "No - Army Corps of Engineers recreation area",
+                keyFeatures: "Reservoir on the Rio Chama with dramatic red and white cliffs. The layered cliffs surrounding this lake appear in several O'Keeffe paintings.",
+                productionNotes: "Colorful cliff reflections in still water, O'Keeffe-style landscape compositions, dramatic sky reflections, desert reservoir juxtaposition.",
+                googleMaps: "https://maps.google.com/?q=Abiquiu+Lake",
+                priority: "Low",
+                okeeffe: true
+            },
+            {
+                name: "Jerred Zegelis (Potential Collaborator)",
+                category: "People & Contacts",
+                region: "Taos Area",
+                coords: [36.4072, -105.5731],
+                dates: "By arrangement",
+                bestTime: "N/A",
+                admission: "N/A",
+                permits: "N/A",
+                keyFeatures: "OM-3 \"power user\" featured in PetaPixel article (January 2026). Nebraska-based but could travel to NM. His creative philosophy aligns perfectly with a New Mexico art story.",
+                productionNotes: "Known for \"invented town\" project, creative dial experimentation, \"breaking the rules\" approach. Could demonstrate OM-3 creative features in context of artistic heritage. Not an official OM ambassador - may require different engagement approach.",
+                googleMaps: null,
+                priority: "High"
+            },
+            {
+                name: "Nicholas Herrera - \"El Rito Santero\"",
+                category: "People & Contacts",
+                region: "O'Keeffe Country",
+                coords: [36.32, -106.18],
+                dates: "By arrangement",
+                bestTime: "Midday for yard work; any time for studio",
+                admission: "N/A",
+                permits: "Arrange studio visit in advance",
+                keyFeatures: "Rebellious santero (saint carver), nationally recognized artist. Wild youth with lowriders and drugs led to near-fatal car crash. In the coma, he claims to have seen the \"Death Cart\" carved by his great-uncle.",
+                productionNotes: "Uses chainsaws and recycled car parts alongside traditional cottonwood root. Subjects include saints AND social commentary: police brutality, opioid crisis, nuclear legacy. His lowriders ('39 Chevy, '48 Chevy) bridge traditional and automotive cultures. MOST VISUALLY AND NARRATIVELY POTENT ARTIST for documentary format.",
+                googleMaps: "https://maps.google.com/?q=El+Rito+NM",
+                priority: "High"
+            },
+            {
+                name: "Rob Vanderslice - Custom Lowrider Painter",
+                category: "People & Contacts",
+                region: "Albuquerque Area",
+                coords: [35.08, -106.65],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Arrange visit",
+                keyFeatures: "High-end custom painter, nationally renowned for lowrider finishes. Overcame addiction through the discipline of his art - parallels region's broader struggles and redemptions.",
+                productionNotes: "His \"tape art\" process - laying intricate geometric patterns for \"candy\" paint jobs - is visually mesmerizing and highly technical. Appeals to \"how-it's-made\" curiosity of PetaPixel audience.",
+                googleMaps: null,
+                priority: "High"
+            },
+            {
+                name: "The Medina Family - Joan & \"Low Low\" Medina",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.99, -105.94],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Contact family",
+                keyFeatures: "Historians and elders of lowrider culture, run Low Low's Lowrider Art Place in Chimayó. Living historians who can articulate the culture's significance.",
+                productionNotes: "Joan offers vital counter-narrative: role of women in lowrider scene as owners and creators, not just models. Interviews in their gallery/museum setting surrounded by lowrider heritage.",
+                googleMaps: "https://maps.google.com/?q=Chimayo+NM",
+                priority: "High"
+            },
+            {
+                name: "Earthship Residents / Pangea Builders",
+                category: "People & Contacts",
+                region: "Taos Area",
+                coords: [36.48, -105.67],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Contact Pangea Builders or Earthship Academy for access beyond tourist path",
+                keyFeatures: "Off-grid pioneers living in sustainable biotecture. Can speak to the reality of off-grid living - catching their own water, growing food in internal greenhouses.",
+                productionNotes: "Daily life in an Earthship, greenhouse tending, sustainable systems in action. Story angle: Climate resilience made real and livable. \"Living the future for decades.\"",
+                googleMaps: "https://maps.google.com/?q=Earthship+Visitor+Center+Taos",
+                priority: "High"
+            },
+            {
+                name: "Los Alamos Scientist-Artists",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.88, -106.30],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Research specific contacts",
+                keyFeatures: "Physicists and mathematicians who lead double lives as serious artists. Embody the tension between destructive power of nuclear legacy and creative impulse.",
+                productionNotes: "Examples: Jenna Sjunneson McDanold (mathematician who models fire dynamics), Mike Michnovicz (photographed Manhattan Project). Interviews about how scientific minds interpret landscape. Story angle: \"Atomic Artists\" - a distinct and often overlooked subculture.",
+                googleMaps: "https://maps.google.com/?q=Fuller+Lodge+Art+Center+Los+Alamos",
+                priority: "High"
+            },
+            {
+                name: "David Michael Kennedy - Master Photographer",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.69, -105.94],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Research contact through Santa Fe gallery scene",
+                keyFeatures: "Renowned photographer known for intimate portraits of artists, musicians, and cultural figures. Has photographed everyone from Georgia O'Keeffe to Bob Dylan.",
+                productionNotes: "Living legend who can speak to decades of photographing New Mexico's creative community. His archive represents visual history of the art scene. Interview in his studio surrounded by iconic portraits. Story angle: The photographer's photographer - meta-narrative.",
+                googleMaps: null,
+                priority: "High"
+            },
+            {
+                name: "Rose B. Simpson - Contemporary Sculptor",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.97, -106.09],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Represented by major galleries; approach through official channels",
+                keyFeatures: "Internationally recognized sculptor working in clay, metal, and found materials; also builds custom cars. Daughter of renowned potter Roxanne Swentzell.",
+                productionNotes: "Her monumental ceramic figures address identity, gender, and indigenous futurism. Also fabricates custom lowriders and motorcycles. Studio visit showing scale of her ceramic figures; her custom car builds. Story angle: Indigenous futurism meets traditional craft.",
+                googleMaps: null,
+                priority: "High"
+            },
+            {
+                name: "Jody Naranjo - Potter & Cultural Innovator",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.97, -106.09],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Contact through gallery",
+                keyFeatures: "Award-winning potter known for incorporating modern imagery into traditional forms. From the renowned Naranjo pottery family of Santa Clara.",
+                productionNotes: "Her work playfully incorporates pop culture, text, and contemporary symbols into traditional pottery forms. Demonstrates how traditional craft evolves while maintaining cultural continuity.",
+                googleMaps: null,
+                priority: "Low"
+            },
+            {
+                name: "Roxanne Swentzell - Master Sculptor",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.97, -106.09],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Contact through official channels",
+                keyFeatures: "Legendary sculptor known for emotionally powerful figurative clay work. Her unfired clay sculptures capture human emotion with startling intimacy. Mother of Rose B. Simpson.",
+                productionNotes: "Represents the highest achievement in contemporary Native sculpture. Founded the Flowering Tree Permaculture Institute. Studio environment, her permaculture project, multi-generational artistic family. Story angle: Master artist who sees art and sustainable living as inseparable.",
+                googleMaps: null,
+                priority: "High"
+            },
+            {
+                name: "Peter Lipscomb - Landscape Photographer",
+                category: "People & Contacts",
+                region: "Santa Fe Area",
+                coords: [35.69, -105.94],
+                dates: "By arrangement",
+                bestTime: "Golden hour",
+                admission: "N/A",
+                permits: "N/A",
+                keyFeatures: "Fine art landscape photographer specializing in New Mexico's dramatic light and terrain. Active in regional photography community.",
+                productionNotes: "Can speak technically to what makes New Mexico light unique for photography. Shooting alongside him during golden hour; technical discussion of light quality. Story angle: Contemporary photographer continuing the legacy of Adams.",
+                googleMaps: null,
+                priority: "Low"
+            },
+            {
+                name: "Miguel Gandert - Documentary Photographer (Backup)",
+                category: "People & Contacts",
+                region: "Albuquerque Area",
+                coords: [35.08, -106.65],
+                dates: "By arrangement",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "University of New Mexico faculty",
+                keyFeatures: "Professor and photographer who has documented lowrider culture, Hispano traditions, and border communities for decades.",
+                productionNotes: "His archive and expertise provide essential context for understanding lowrider culture and Hispano New Mexico. Interview about his decades documenting the culture; access to his photographic archive. BACKUP CONTACT.",
+                googleMaps: null,
+                priority: "Low"
+            },
+            {
+                name: "Stanley Crawford - Author (Backup)",
+                category: "People & Contacts",
+                region: "High Road to Taos",
+                coords: [36.21, -105.91],
+                dates: "By arrangement - acequia cleaning season (late March)",
+                bestTime: "Any time",
+                admission: "N/A",
+                permits: "Approach through publisher or local connections",
+                keyFeatures: "Author of \"Mayordomo: Chronicle of an Acequia in Northern New Mexico\" - definitive account of traditional water management. Also a garlic farmer in Dixon.",
+                productionNotes: "His book is the essential text on acequia culture. Lives the agricultural life he writes about. Interview during acequia cleaning season; connection between water, agriculture, and community. BACKUP CONTACT.",
+                googleMaps: "https://maps.google.com/?q=Dixon+NM",
+                priority: "Low"
+            },
+            {
+                name: "New Mexico Film Office",
+                category: "Resources & Logistics",
+                region: "Santa Fe Area",
+                coords: [35.6869, -105.9380],
+                dates: "Pre-production contact",
+                bestTime: "N/A",
+                admission: "N/A",
+                permits: "Contact: nmfilm.com; Processing time 3-5 business days",
+                keyFeatures: "State film commission - very film-friendly. New Mexico actively courts productions; excellent support infrastructure.",
+                productionNotes: "Small crews on public land generally need no permit; state/federal land varies; private property needs release.",
+                googleMaps: "https://maps.google.com/?q=New+Mexico+Film+Office",
+                priority: "Low"
+            },
+            {
+                name: "Albuquerque International Sunport (ABQ)",
+                category: "Resources & Logistics",
+                region: "Albuquerque Area",
+                coords: [35.0402, -106.6090],
+                dates: "Arrival/Departure",
+                bestTime: "N/A",
+                admission: "N/A",
+                permits: "N/A",
+                keyFeatures: "Primary arrival airport. 1-hour drive to Santa Fe; rental cars available.",
+                productionNotes: "Flight estimates: Calgary ~$350-400 RT, Boise ~$250-300 RT.",
+                googleMaps: "https://maps.google.com/?q=Albuquerque+International+Sunport",
+                priority: "Low"
+            }
+        ];
+
+        const transportationRoutes = [
+            {
+                from: "Albuquerque (ABQ Airport)",
+                to: "Santa Fe",
+                fromCoords: [35.0402, -106.6090],
+                toCoords: [35.6870, -105.9378],
+                date: "Arrival Day",
+                mode: "Rental Car",
+                duration: "1 hour",
+                cost: "~$65/day + gas (~$15) = ~$80 USD",
+                notes: "Direct I-25 route. Consider stopping at 599 Relief Route Overlook for first landscape shots if arriving with good light."
+            },
+            {
+                from: "Santa Fe",
+                to: "Taos (via High Road)",
+                fromCoords: [35.6870, -105.9378],
+                toCoords: [36.4072, -105.5731],
+                date: "Day Trip",
+                mode: "Rental Car",
+                duration: "2-2.5 hours (scenic route with stops)",
+                cost: "Gas only (~$25)",
+                notes: "High Road to Taos passes through Chimayó, Truchas, Las Trampas. Multiple photo stops. Return via Low Road (NM-68) for different scenery and orchard views."
+            },
+            {
+                from: "Santa Fe",
+                to: "Ghost Ranch / Abiquiú",
+                fromCoords: [35.6870, -105.9378],
+                toCoords: [36.3322, -106.4722],
+                date: "Full Day Trip",
+                mode: "Rental Car",
+                duration: "1.5 hours each way",
+                cost: "Gas only (~$30)",
+                notes: "US-84 northwest. Stop at Plaza Blanca (verify access 48 hours ahead), Abiquiú village, Ghost Ranch. Pack lunch - limited food options."
+            },
+            {
+                from: "Santa Fe",
+                to: "Los Alamos (Fuller Lodge)",
+                fromCoords: [35.6870, -105.9378],
+                toCoords: [35.88, -106.30],
+                date: "Half Day Trip",
+                mode: "Rental Car",
+                duration: "45 minutes each way",
+                cost: "Gas only (~$15)",
+                notes: "NM-502. Can combine with White Rock Overlook and Valles Caldera if full day available."
+            },
+            {
+                from: "Santa Fe",
+                to: "Ojito Wilderness",
+                fromCoords: [35.6870, -105.9378],
+                toCoords: [35.48, -106.92],
+                date: "Half Day or Sunset Trip",
+                mode: "Rental Car",
+                duration: "1.5 hours each way",
+                cost: "Gas only (~$25)",
+                notes: "Dirt road access - high clearance vehicle recommended. Plan for no cell service. Bring water."
+            }
+        ];
+
+        // =====================================================
+        // MAP INITIALIZATION
+        // =====================================================
+
+        const map = L.map('map', {
+            zoomControl: true
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Layer groups for filtering
+        const markerLayers = {};
+        Object.keys(categories).forEach(cat => {
+            markerLayers[cat] = L.layerGroup().addTo(map);
+        });
+        const routeLayer = L.layerGroup().addTo(map);
+
+        // =====================================================
+        // MARKER CREATION FUNCTIONS
+        // =====================================================
+
+        function createMarkerIcon(category, location) {
+            const cat = categories[category];
+            const isRegional = category === "Regional Overview";
+            const size = isRegional ? 36 : 24;
+
+            let badgesHtml = '';
+            if (location) {
+                const badges = [];
+                if (location.unesco) badges.push('🏛️');
+                if (location.warning) badges.push('⚠️');
+                if (location.seasonal) badges.push('🌸');
+                if (location.okeeffe) badges.push('🎨');
+                if (location.drone) badges.push('🚁');
+
+                if (badges.length > 0) {
+                    badgesHtml = `<div class="marker-badges">${badges.map(b => `<span class="marker-badge">${b}</span>`).join('')}</div>`;
+                }
+            }
+
+            let priorityBadge = '';
+            if (location && location.priority) {
+                const isHigh = location.priority === "High";
+                priorityBadge = `<span class="priority-badge ${isHigh ? '' : 'low'}">${isHigh ? 'HIGH' : 'LOW'}</span>`;
+            }
+
+            const html = isRegional
+                ? `<div class="star-marker" style="color: ${cat.color};">★</div>${badgesHtml}`
+                : `<div class="custom-marker" style="width: ${size}px; height: ${size}px;">
+                     <div class="marker-inner" style="background: ${cat.color};"></div>
+                   </div>${badgesHtml}${priorityBadge}`;
+
+            return L.divIcon({
+                html: html,
+                className: '',
+                iconSize: [size, size],
+                iconAnchor: [size/2, size/2],
+                popupAnchor: [0, -size/2]
+            });
+        }
+
+        function createLocationPopup(loc) {
+            const badges = [];
+            if (loc.priority === "High") badges.push('<span class="popup-badge priority-high">HIGH PRIORITY</span>');
+            if (loc.priority === "Low") badges.push('<span class="popup-badge priority-low">SUPPORTING</span>');
+            if (loc.unesco) badges.push('<span class="popup-badge">🏛️ UNESCO</span>');
+            if (loc.okeeffe) badges.push('<span class="popup-badge">🎨 O\'Keeffe</span>');
+            if (loc.seasonal) badges.push('<span class="popup-badge">🌸 Seasonal</span>');
+            if (loc.drone) badges.push('<span class="popup-badge">🚁 Drone OK</span>');
+
+            let warningHtml = '';
+            if (loc.warning) {
+                warningHtml = `<div class="popup-warning">⚠️ <strong>Production Warning:</strong> See notes below for critical access information.</div>`;
+            }
+
+            const linksHtml = loc.googleMaps
+                ? `<div class="popup-links">
+                     <a href="${loc.googleMaps}" target="_blank" class="popup-link">Google Maps</a>
+                     <a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(loc.name + ' New Mexico')}" target="_blank" class="popup-link secondary">Images</a>
+                   </div>`
+                : '';
+
+            return `
+                <div class="popup-card">
+                    <div class="popup-header">
+                        <h3>${loc.name}</h3>
+                        ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
+                    </div>
+                    <div class="popup-body">
+                        <div class="popup-meta">
+                            <div><span class="icon">📍</span> <strong>Region:</strong> ${loc.region}</div>
+                            <div><span class="icon">🕐</span> <strong>Best Time:</strong> ${loc.bestTime}</div>
+                            <div><span class="icon">💰</span> <strong>Admission:</strong> ${loc.admission}</div>
+                            <div><span class="icon">📋</span> <strong>Permits:</strong> ${loc.permits}</div>
+                        </div>
+                        ${warningHtml}
+                        <div class="popup-section">
+                            <h4>Key Features</h4>
+                            <p>${loc.keyFeatures}</p>
+                        </div>
+                        <div class="popup-section">
+                            <h4>Production Notes</h4>
+                            <p>${loc.productionNotes}</p>
+                        </div>
+                    </div>
+                    ${linksHtml}
+                </div>
+            `;
+        }
+
+        function createRegionalPopup(region) {
+            return `
+                <div class="popup-card">
+                    <div class="popup-header regional">
+                        <h3>${region.name} Overview</h3>
+                    </div>
+                    <div class="popup-body">
+                        <div class="popup-meta">
+                            <div><span class="icon">📅</span> <strong>Date Range:</strong> ${region.dateRange}</div>
+                            <div><span class="icon">📍</span> <strong>Locations:</strong> ${region.locationCount} filming spots</div>
+                            <div><span class="icon">💰</span> <strong>Budget:</strong> ${region.budget}</div>
+                        </div>
+                        <div class="popup-section">
+                            <h4>Key Themes</h4>
+                            <p>${region.keyThemes}</p>
+                        </div>
+                        <div class="popup-section">
+                            <h4>Logistics</h4>
+                            <p>${region.logistics}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createRoutePopup(route) {
+            return `
+                <div class="route-popup">
+                    <h3>${route.from} → ${route.to}</h3>
+                    <div class="route-details">
+                        <div>🚗 <strong>${route.mode}:</strong> ${route.duration}</div>
+                        <div>💰 <strong>Cost:</strong> ${route.cost}</div>
+                        <div>📅 <strong>When:</strong> ${route.date}</div>
+                        <div style="margin-top: 8px;"><strong>Notes:</strong> ${route.notes}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // =====================================================
+        // ADD MARKERS AND ROUTES
+        // =====================================================
+
+        // Add regional overview markers
+        regionalOverviews.forEach(region => {
+            const marker = L.marker(region.coords, {
+                icon: createMarkerIcon("Regional Overview", null)
+            });
+            marker.bindPopup(createRegionalPopup(region), { maxWidth: 350 });
+            marker.addTo(markerLayers["Regional Overview"]);
+        });
+
+        // Add location markers
+        locations.forEach(loc => {
+            const marker = L.marker(loc.coords, {
+                icon: createMarkerIcon(loc.category, loc)
+            });
+            marker.bindPopup(createLocationPopup(loc), { maxWidth: 350 });
+            marker.addTo(markerLayers[loc.category]);
+        });
+
+        // Add transportation routes
+        transportationRoutes.forEach(route => {
+            const polyline = L.polyline([route.fromCoords, route.toCoords], {
+                color: '#666',
+                weight: 3,
+                opacity: 0.7,
+                dashArray: '10, 10'
+            });
+            polyline.bindPopup(createRoutePopup(route), { maxWidth: 300 });
+            polyline.addTo(routeLayer);
+        });
+
+        // Fit map to all markers
+        const allCoords = [
+            ...regionalOverviews.map(r => r.coords),
+            ...locations.map(l => l.coords)
+        ];
+        const bounds = L.latLngBounds(allCoords);
+        map.fitBounds(bounds, { padding: [50, 50] });
+
+        // =====================================================
+        // SIDEBAR AND LEGEND
+        // =====================================================
+
+        function buildLegend() {
+            const legendContainer = document.getElementById('categoryLegend');
+            legendContainer.innerHTML = '';
+
+            Object.entries(categories).forEach(([name, cat]) => {
+                const count = name === "Regional Overview"
+                    ? regionalOverviews.length
+                    : locations.filter(l => l.category === name).length;
+
+                const item = document.createElement('div');
+                item.className = `legend-item ${categoryFilters[name] ? '' : 'inactive'}`;
+                item.onclick = () => toggleCategory(name);
+
+                const colorClass = cat.icon === "star" ? "star" : "";
+                const colorContent = cat.icon === "star"
+                    ? `<span style="color: ${cat.color};">★</span>`
+                    : '';
+
+                item.innerHTML = `
+                    <div class="legend-color ${colorClass}" style="background: ${cat.icon === "star" ? 'none' : cat.color};">${colorContent}</div>
+                    <span class="legend-label">${name}</span>
+                    <span class="legend-count">(${count})</span>
+                `;
+                legendContainer.appendChild(item);
+            });
+        }
+
+        function toggleCategory(category) {
+            categoryFilters[category] = !categoryFilters[category];
+
+            if (categoryFilters[category]) {
+                map.addLayer(markerLayers[category]);
+            } else {
+                map.removeLayer(markerLayers[category]);
+            }
+
+            buildLegend();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const btn = document.getElementById('toggleBtn');
+            sidebar.classList.toggle('collapsed');
+            btn.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+        }
+
+        function updateStats() {
+            document.getElementById('totalLocations').textContent = locations.length;
+            document.getElementById('highPriority').textContent = locations.filter(l => l.priority === "High").length;
+        }
+
+        // Initialize
+        buildLegend();
+        updateStats();
+
+        // Auto-collapse sidebar on mobile
+        if (window.innerWidth < 768) {
+            toggleSidebar();
+        }
+    </script>
+</body>
+</html>
