@@ -181,6 +181,126 @@
             margin: 3px 0;
         }
 
+        /* Locations List Styles */
+        .locations-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .locations-header h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        .expand-collapse-links {
+            display: flex;
+            gap: 8px;
+            font-size: 10px;
+        }
+
+        .expand-collapse-links a {
+            color: #8B4513;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .expand-collapse-links a:hover {
+            text-decoration: underline;
+        }
+
+        .category-group {
+            margin-bottom: 8px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .category-group-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f8f8f8;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .category-group-header:hover {
+            background: #f0f0f0;
+        }
+
+        .category-group-header .expand-icon {
+            margin-right: 8px;
+            font-size: 10px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+
+        .category-group.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+
+        .category-group-header .cat-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .category-group-header .cat-name {
+            flex: 1;
+        }
+
+        .category-group-header .cat-count {
+            font-size: 10px;
+            color: #999;
+            margin-left: 5px;
+        }
+
+        .category-group-locations {
+            display: none;
+            padding: 4px 0;
+            background: white;
+        }
+
+        .category-group.expanded .category-group-locations {
+            display: block;
+        }
+
+        .location-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px 6px 28px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #444;
+        }
+
+        .location-item:hover {
+            background: #f5f5f5;
+        }
+
+        .location-item .priority-star {
+            color: #ffc107;
+            margin-right: 5px;
+            font-size: 10px;
+        }
+
+        .location-item .loc-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         /* Custom Markers */
         .custom-marker {
             background: white;
@@ -440,6 +560,16 @@
                 <div><strong>Total Locations:</strong> <span id="totalLocations">0</span></div>
                 <div><strong>High Priority:</strong> <span id="highPriority">0</span></div>
                 <div><strong>Regions:</strong> 5</div>
+            </div>
+            <div class="legend-section">
+                <div class="locations-header">
+                    <h3>Locations</h3>
+                    <div class="expand-collapse-links">
+                        <a onclick="expandAllCategories()">Expand All</a>
+                        <a onclick="collapseAllCategories()">Collapse All</a>
+                    </div>
+                </div>
+                <div id="locationsListContainer"></div>
             </div>
         </div>
     </div>
@@ -1407,6 +1537,9 @@
             markerLayers[cat] = L.layerGroup().addTo(map);
         });
 
+        // Store marker references for fly-to functionality
+        const locationMarkers = {};
+
         // =====================================================
         // MARKER CREATION FUNCTIONS
         // =====================================================
@@ -1539,12 +1672,13 @@
         });
 
         // Add location markers
-        locations.forEach(loc => {
+        locations.forEach((loc, index) => {
             const marker = L.marker(loc.coords, {
                 icon: createMarkerIcon(loc.category, loc)
             });
             marker.bindPopup(createLocationPopup(loc), { maxWidth: 350 });
             marker.addTo(markerLayers[loc.category]);
+            locationMarkers[index] = marker;
         });
 
         // Fit map to all markers
@@ -1610,9 +1744,100 @@
             document.getElementById('highPriority').textContent = locations.filter(l => l.priority === "High").length;
         }
 
+        function buildLocationsSection() {
+            const container = document.getElementById('locationsListContainer');
+            container.innerHTML = '';
+
+            // Group locations by category (excluding Regional Overview)
+            const categoryOrder = Object.keys(categories).filter(cat => cat !== "Regional Overview");
+
+            categoryOrder.forEach(category => {
+                const categoryLocations = locations
+                    .map((loc, index) => ({ ...loc, originalIndex: index }))
+                    .filter(loc => loc.category === category);
+
+                if (categoryLocations.length === 0) return;
+
+                const cat = categories[category];
+                const group = document.createElement('div');
+                group.className = 'category-group';
+                group.setAttribute('data-category', category);
+
+                // Sort locations: High priority first, then alphabetically
+                categoryLocations.sort((a, b) => {
+                    if (a.priority === "High" && b.priority !== "High") return -1;
+                    if (a.priority !== "High" && b.priority === "High") return 1;
+                    return a.name.localeCompare(b.name);
+                });
+
+                const locationsHtml = categoryLocations.map(loc => `
+                    <div class="location-item" onclick="flyToLocation(${loc.originalIndex})">
+                        ${loc.priority === "High" ? '<span class="priority-star">★</span>' : ''}
+                        <span class="loc-name">${loc.name}</span>
+                    </div>
+                `).join('');
+
+                group.innerHTML = `
+                    <div class="category-group-header" onclick="toggleCategoryGroup('${category}')">
+                        <span class="expand-icon">▶</span>
+                        <span class="cat-color" style="background: ${cat.color};"></span>
+                        <span class="cat-name">${category}</span>
+                        <span class="cat-count">(${categoryLocations.length})</span>
+                    </div>
+                    <div class="category-group-locations">
+                        ${locationsHtml}
+                    </div>
+                `;
+
+                container.appendChild(group);
+            });
+        }
+
+        function toggleCategoryGroup(category) {
+            const group = document.querySelector(`.category-group[data-category="${category}"]`);
+            if (group) {
+                group.classList.toggle('expanded');
+            }
+        }
+
+        function expandAllCategories() {
+            document.querySelectorAll('.category-group').forEach(group => {
+                group.classList.add('expanded');
+            });
+        }
+
+        function collapseAllCategories() {
+            document.querySelectorAll('.category-group').forEach(group => {
+                group.classList.remove('expanded');
+            });
+        }
+
+        function flyToLocation(index) {
+            const loc = locations[index];
+            const marker = locationMarkers[index];
+
+            if (loc && marker) {
+                // Ensure the category layer is visible
+                if (!categoryFilters[loc.category]) {
+                    toggleCategory(loc.category);
+                }
+
+                // Fly to the location
+                map.flyTo(loc.coords, 14, {
+                    duration: 1
+                });
+
+                // Open the popup after flying
+                setTimeout(() => {
+                    marker.openPopup();
+                }, 1000);
+            }
+        }
+
         // Initialize
         buildLegend();
         updateStats();
+        buildLocationsSection();
 
         // Auto-collapse sidebar on mobile
         if (window.innerWidth < 768) {
