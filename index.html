@@ -817,6 +817,71 @@
             margin-left: 5px;
             font-weight: 600;
         }
+
+        /* Priority-based Recommendation Box */
+        .popup-recommendation {
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin: 12px 0;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .popup-recommendation.priority-high {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .popup-recommendation.priority-medium {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .popup-recommendation.priority-not-recommended {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .popup-recommendation .priority-label {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        .popup-recommendation .recommendation-text {
+            margin-top: 4px;
+        }
+
+        /* Read More Link */
+        .popup-read-more {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+            font-size: 12px;
+        }
+        .popup-read-more a {
+            color: #8B4513;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .popup-read-more a:hover {
+            text-decoration: underline;
+        }
+
+        /* Priority dropdown in edit mode */
+        select.editable-field {
+            background: white;
+            cursor: pointer;
+        }
+        .edit-field-group {
+            margin-bottom: 10px;
+        }
+        .edit-field-group label {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 3px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
@@ -1976,9 +2041,15 @@
             const effectiveLoc = typeof index === 'number' ? getEffectiveLocation(index) : loc;
             const isEdited = typeof index === 'number' && sessionEdits[index];
 
+            // Map old priority values to new system
+            const priorityLevel = effectiveLoc.priorityLevel ||
+                (effectiveLoc.priority === "High" ? "High Priority" :
+                 effectiveLoc.priority === "Low" ? "Medium Priority" : "Medium Priority");
+
             const badges = [];
-            if (effectiveLoc.priority === "High") badges.push('<span class="popup-badge priority-high">HIGH PRIORITY</span>');
-            if (effectiveLoc.priority === "Low") badges.push('<span class="popup-badge priority-low">SUPPORTING</span>');
+            if (priorityLevel === "High Priority") badges.push('<span class="popup-badge priority-high">HIGH PRIORITY</span>');
+            else if (priorityLevel === "Medium Priority") badges.push('<span class="popup-badge priority-low">MEDIUM</span>');
+            else if (priorityLevel === "Not Recommended") badges.push('<span class="popup-badge" style="background:#f8d7da;color:#721c24;">NOT RECOMMENDED</span>');
             if (effectiveLoc.unesco) badges.push('<span class="popup-badge">🏛️ UNESCO</span>');
             if (effectiveLoc.okeeffe) badges.push('<span class="popup-badge">🎨 O\'Keeffe</span>');
             if (effectiveLoc.seasonal) badges.push('<span class="popup-badge">🌸 Seasonal</span>');
@@ -1988,6 +2059,30 @@
             let warningHtml = '';
             if (effectiveLoc.warning) {
                 warningHtml = `<div class="popup-warning">⚠️ <strong>Production Warning:</strong> See notes below for critical access information.</div>`;
+            }
+
+            // Recommendation box with priority-based colors
+            let recommendationHtml = '';
+            if (effectiveLoc.recommendation) {
+                const priorityClass = priorityLevel === "High Priority" ? "priority-high" :
+                                     priorityLevel === "Not Recommended" ? "priority-not-recommended" : "priority-medium";
+                recommendationHtml = `
+                    <div class="popup-recommendation ${priorityClass}">
+                        <div class="priority-label">${priorityLevel}</div>
+                        <div class="recommendation-text" data-field="recommendation">${effectiveLoc.recommendation}</div>
+                    </div>`;
+            }
+
+            // Read More link
+            let readMoreHtml = '';
+            const readMoreSource = effectiveLoc.readMoreSource || '';
+            const readMoreUrl = effectiveLoc.readMoreUrl || '';
+            if (readMoreSource && readMoreUrl) {
+                readMoreHtml = `<div class="popup-read-more" data-field="readMore">📰 Read More: <a href="${readMoreUrl}" target="_blank">${readMoreSource}</a></div>`;
+            } else if (readMoreUrl) {
+                readMoreHtml = `<div class="popup-read-more" data-field="readMore">📰 Read More: <a href="${readMoreUrl}" target="_blank">Link</a></div>`;
+            } else if (readMoreSource) {
+                readMoreHtml = `<div class="popup-read-more" data-field="readMore">📰 Read More: ${readMoreSource}</div>`;
             }
 
             const googleMapsUrl = effectiveLoc.googleMaps || generateGoogleMapsUrl(effectiveLoc.coords[0], effectiveLoc.coords[1]);
@@ -2014,6 +2109,7 @@
                             <div><span class="icon">🌐</span> <strong>Coords:</strong> <span data-field="coords">${effectiveLoc.coords[0].toFixed(6)}, ${effectiveLoc.coords[1].toFixed(6)}</span></div>
                         </div>
                         ${warningHtml}
+                        ${recommendationHtml}
                         <div class="popup-section">
                             <h4>Key Features</h4>
                             <p data-field="keyFeatures">${effectiveLoc.keyFeatures}</p>
@@ -2022,6 +2118,7 @@
                             <h4>Production Notes</h4>
                             <p data-field="productionNotes">${effectiveLoc.productionNotes}</p>
                         </div>
+                        ${readMoreHtml}
                         <button class="${editBtnClass}" onclick="startEditing(${index})">Edit Location</button>
                         <div class="popup-edit-actions" data-index="${index}">
                             <button class="popup-save-btn" onclick="saveEdits(${index})">Save</button>
@@ -2252,6 +2349,11 @@
             if (editBtn) editBtn.style.display = 'none';
             if (editActions) editActions.classList.add('visible');
 
+            // Determine current priority level
+            const currentPriority = effectiveLoc.priorityLevel ||
+                (effectiveLoc.priority === "High" ? "High Priority" :
+                 effectiveLoc.priority === "Low" ? "Medium Priority" : "Medium Priority");
+
             // Replace text spans with inputs
             const fieldsConfig = {
                 dates: { type: 'input', value: effectiveLoc.dates || '' },
@@ -2280,6 +2382,85 @@
                     span.innerHTML = `<input type="text" class="editable-field" data-edit-field="${field}" value="${config.value}">`;
                 }
             });
+
+            // Add Priority dropdown and Recommendation fields
+            const recommendationBox = popupBody.querySelector('.popup-recommendation');
+            if (recommendationBox) {
+                // Update recommendation box to be editable
+                const recText = effectiveLoc.recommendation || '';
+                recommendationBox.innerHTML = `
+                    <div class="edit-field-group">
+                        <label>Priority</label>
+                        <select class="editable-field" data-edit-field="priorityLevel">
+                            <option value="High Priority" ${currentPriority === 'High Priority' ? 'selected' : ''}>High Priority</option>
+                            <option value="Medium Priority" ${currentPriority === 'Medium Priority' ? 'selected' : ''}>Medium Priority</option>
+                            <option value="Not Recommended" ${currentPriority === 'Not Recommended' ? 'selected' : ''}>Not Recommended</option>
+                        </select>
+                    </div>
+                    <div class="edit-field-group">
+                        <label>Recommendation</label>
+                        <textarea class="editable-field" data-edit-field="recommendation" placeholder="Add recommendation details...">${recText}</textarea>
+                    </div>
+                `;
+            } else {
+                // Create recommendation edit section if it doesn't exist
+                const productionNotesSection = popupBody.querySelector('.popup-section:last-of-type');
+                if (productionNotesSection) {
+                    const newRecSection = document.createElement('div');
+                    newRecSection.className = 'popup-recommendation priority-medium';
+                    newRecSection.innerHTML = `
+                        <div class="edit-field-group">
+                            <label>Priority</label>
+                            <select class="editable-field" data-edit-field="priorityLevel">
+                                <option value="High Priority" ${currentPriority === 'High Priority' ? 'selected' : ''}>High Priority</option>
+                                <option value="Medium Priority" ${currentPriority === 'Medium Priority' ? 'selected' : ''}>Medium Priority</option>
+                                <option value="Not Recommended" ${currentPriority === 'Not Recommended' ? 'selected' : ''}>Not Recommended</option>
+                            </select>
+                        </div>
+                        <div class="edit-field-group">
+                            <label>Recommendation</label>
+                            <textarea class="editable-field" data-edit-field="recommendation" placeholder="Add recommendation details..."></textarea>
+                        </div>
+                    `;
+                    productionNotesSection.insertAdjacentElement('afterend', newRecSection);
+                }
+            }
+
+            // Add Read More fields
+            const readMoreSection = popupBody.querySelector('.popup-read-more');
+            const readMoreSource = effectiveLoc.readMoreSource || '';
+            const readMoreUrl = effectiveLoc.readMoreUrl || '';
+
+            if (readMoreSection) {
+                readMoreSection.innerHTML = `
+                    <div class="edit-field-group">
+                        <label>Read More Source</label>
+                        <input type="text" class="editable-field" data-edit-field="readMoreSource" value="${readMoreSource}" placeholder="e.g., New York Times">
+                    </div>
+                    <div class="edit-field-group">
+                        <label>Read More URL</label>
+                        <input type="text" class="editable-field" data-edit-field="readMoreUrl" value="${readMoreUrl}" placeholder="https://...">
+                    </div>
+                `;
+            } else {
+                // Create read more edit section if it doesn't exist
+                const editBtnElement = popupBody.querySelector('.popup-edit-btn');
+                if (editBtnElement) {
+                    const newReadMoreSection = document.createElement('div');
+                    newReadMoreSection.className = 'popup-read-more';
+                    newReadMoreSection.innerHTML = `
+                        <div class="edit-field-group">
+                            <label>Read More Source</label>
+                            <input type="text" class="editable-field" data-edit-field="readMoreSource" value="${readMoreSource}" placeholder="e.g., New York Times">
+                        </div>
+                        <div class="edit-field-group">
+                            <label>Read More URL</label>
+                            <input type="text" class="editable-field" data-edit-field="readMoreUrl" value="${readMoreUrl}" placeholder="https://...">
+                        </div>
+                    `;
+                    editBtnElement.insertAdjacentElement('beforebegin', newReadMoreSection);
+                }
+            }
         }
 
         function saveEdits(index) {
@@ -2289,7 +2470,7 @@
             const original = locations[index];
             const changes = {};
 
-            // Gather all changed values
+            // Gather all changed values for standard fields
             const fields = ['dates', 'bestTime', 'admission', 'permits', 'keyFeatures', 'productionNotes'];
             fields.forEach(field => {
                 const input = popupBody.querySelector(`[data-edit-field="${field}"]`);
@@ -2313,13 +2494,47 @@
                 }
             }
 
+            // Handle priority level
+            const prioritySelect = popupBody.querySelector('[data-edit-field="priorityLevel"]');
+            if (prioritySelect) {
+                const newPriority = prioritySelect.value;
+                const originalPriority = original.priorityLevel ||
+                    (original.priority === "High" ? "High Priority" :
+                     original.priority === "Low" ? "Medium Priority" : "Medium Priority");
+                if (newPriority !== originalPriority) {
+                    changes.priorityLevel = newPriority;
+                }
+            }
+
+            // Handle recommendation
+            const recommendationInput = popupBody.querySelector('[data-edit-field="recommendation"]');
+            if (recommendationInput && recommendationInput.value !== (original.recommendation || '')) {
+                changes.recommendation = recommendationInput.value;
+            }
+
+            // Handle Read More fields
+            const readMoreSourceInput = popupBody.querySelector('[data-edit-field="readMoreSource"]');
+            if (readMoreSourceInput && readMoreSourceInput.value !== (original.readMoreSource || '')) {
+                changes.readMoreSource = readMoreSourceInput.value;
+            }
+
+            const readMoreUrlInput = popupBody.querySelector('[data-edit-field="readMoreUrl"]');
+            if (readMoreUrlInput && readMoreUrlInput.value !== (original.readMoreUrl || '')) {
+                changes.readMoreUrl = readMoreUrlInput.value;
+            }
+
             // Store edits if there are any changes
             if (Object.keys(changes).length > 0) {
-                sessionEdits[index] = {
-                    name: original.name,
-                    originalIndex: index,
-                    changes: changes
-                };
+                // Merge with existing edits if any
+                if (sessionEdits[index]) {
+                    sessionEdits[index].changes = { ...sessionEdits[index].changes, ...changes };
+                } else {
+                    sessionEdits[index] = {
+                        name: original.name,
+                        originalIndex: index,
+                        changes: changes
+                    };
+                }
 
                 // If coordinates changed, move the marker
                 if (changes.coords) {
@@ -2373,7 +2588,7 @@
             }
 
             const today = new Date().toISOString().split('T')[0];
-            let text = `**CLAUDE CODE INSTRUCTION: Update the interactive map (index.html) with the following changes. For each location listed, find the corresponding entry in the \`locations\` array and update the coords (lat/lng) and any other fields shown.**\n\n`;
+            let text = `**CLAUDE CODE INSTRUCTION: Update the interactive map (index.html) with the following changes.**\n\n`;
             text += `## MAP EDITS - ${today}\n\n`;
 
             editKeys.sort((a, b) => parseInt(a) - parseInt(b));
@@ -2382,12 +2597,16 @@
                 const edit = sessionEdits[indexStr];
                 const index = parseInt(indexStr);
 
-                text += `### Location #${index}: ${edit.name}\n`;
+                text += `### Location: ${edit.name}\n`;
 
                 const changes = edit.changes;
                 const fieldLabels = {
                     coords: 'Coordinates',
                     googleMaps: 'Google Maps URL',
+                    priorityLevel: 'Priority',
+                    recommendation: 'Recommendation',
+                    readMoreSource: 'Read More Source',
+                    readMoreUrl: 'Read More URL',
                     dates: 'Dates',
                     bestTime: 'Best Time',
                     admission: 'Admission',
@@ -2402,9 +2621,25 @@
                     text += `- **Google Maps URL:** ${changes.googleMaps}\n`;
                 }
 
+                // Output priority and recommendation if changed
+                if (changes.priorityLevel) {
+                    text += `- **Priority:** ${changes.priorityLevel}\n`;
+                }
+                if (changes.recommendation) {
+                    text += `- **Recommendation:** ${changes.recommendation}\n`;
+                }
+
+                // Output read more fields if changed
+                if (changes.readMoreSource) {
+                    text += `- **Read More Source:** ${changes.readMoreSource}\n`;
+                }
+                if (changes.readMoreUrl) {
+                    text += `- **Read More URL:** ${changes.readMoreUrl}\n`;
+                }
+
                 // Output other fields
                 Object.entries(changes).forEach(([field, value]) => {
-                    if (field === 'coords' || field === 'googleMaps') return;
+                    if (['coords', 'googleMaps', 'priorityLevel', 'recommendation', 'readMoreSource', 'readMoreUrl'].includes(field)) return;
                     const label = fieldLabels[field] || field;
                     text += `- **${label}:** ${value}\n`;
                 });
