@@ -2404,8 +2404,9 @@
                 `;
             } else {
                 // Create recommendation edit section if it doesn't exist
-                const productionNotesSection = popupBody.querySelector('.popup-section:last-of-type');
-                if (productionNotesSection) {
+                const popupSections = popupBody.querySelectorAll('.popup-section');
+                const lastPopupSection = popupSections[popupSections.length - 1];
+                if (lastPopupSection) {
                     const newRecSection = document.createElement('div');
                     newRecSection.className = 'popup-recommendation priority-medium';
                     newRecSection.innerHTML = `
@@ -2422,7 +2423,7 @@
                             <textarea class="editable-field" data-edit-field="recommendation" placeholder="Add recommendation details..."></textarea>
                         </div>
                     `;
-                    productionNotesSection.insertAdjacentElement('afterend', newRecSection);
+                    lastPopupSection.insertAdjacentElement('afterend', newRecSection);
                 }
             }
 
