@@ -531,6 +531,292 @@
                 min-width: 250px;
             }
         }
+
+        /* =====================================================
+           PRODUCTION EDITING STYLES (Remove before delivery)
+           ===================================================== */
+
+        /* Crosshair cursor for precise coordinate capture */
+        .leaflet-container {
+            cursor: crosshair !important;
+        }
+        .leaflet-interactive {
+            cursor: pointer !important;
+        }
+
+        /* Toast notification */
+        .coord-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            font-family: monospace;
+        }
+        .coord-toast.show {
+            opacity: 1;
+        }
+        .coord-toast .coords {
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        /* Edit Mode Toggle */
+        .edit-mode-section {
+            background: #fff3cd;
+            border: 1px dashed #ffc107;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .edit-mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .edit-mode-toggle label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #856404;
+        }
+        .edit-mode-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .edit-mode-indicator {
+            font-size: 10px;
+            color: #856404;
+            margin-top: 5px;
+        }
+        .export-btn {
+            display: none;
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .export-btn:hover {
+            background: #6d360f;
+        }
+        .export-btn.visible {
+            display: block;
+        }
+
+        /* Editable Card Styles */
+        .popup-edit-btn {
+            display: none;
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            background: #ffc107;
+            color: #333;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .popup-edit-btn:hover {
+            background: #e0a800;
+        }
+        .popup-edit-btn.visible {
+            display: block;
+        }
+
+        .popup-edit-actions {
+            display: none;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .popup-edit-actions.visible {
+            display: flex;
+        }
+        .popup-edit-actions button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .popup-save-btn {
+            background: #28a745;
+            color: white;
+        }
+        .popup-save-btn:hover {
+            background: #218838;
+        }
+        .popup-cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .popup-cancel-btn:hover {
+            background: #5a6268;
+        }
+
+        .popup-body.editing {
+            background: #fffbeb;
+        }
+        .popup-body.editing .popup-meta div,
+        .popup-body.editing .popup-section p {
+            margin: 4px 0;
+        }
+
+        .editable-field {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        .editable-field:focus {
+            outline: none;
+            border-color: #ffc107;
+            box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.25);
+        }
+        textarea.editable-field {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .editable-coords {
+            display: flex;
+            gap: 8px;
+        }
+        .editable-coords input {
+            flex: 1;
+        }
+
+        .field-label {
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        /* Export Modal */
+        .export-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+        .export-modal-overlay.visible {
+            display: flex;
+        }
+        .export-modal {
+            background: white;
+            border-radius: 8px;
+            max-width: 700px;
+            max-height: 80vh;
+            width: 90%;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .export-modal-header {
+            background: #8B4513;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .export-modal-header h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+        .export-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .export-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(80vh - 130px);
+        }
+        .export-modal-body pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        .export-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .export-modal-footer button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .copy-export-btn {
+            background: #28a745;
+            color: white;
+        }
+        .copy-export-btn:hover {
+            background: #218838;
+        }
+        .close-export-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .close-export-btn:hover {
+            background: #5a6268;
+        }
+        .no-edits-message {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        /* Edited indicator badge */
+        .edited-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #333;
+            font-size: 9px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-left: 5px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -545,6 +831,16 @@
             <button class="toggle-btn" id="toggleBtn">◀</button>
         </div>
         <div class="sidebar-content">
+            <!-- Production Edit Mode (Remove before delivery) -->
+            <div class="edit-mode-section">
+                <div class="edit-mode-toggle">
+                    <input type="checkbox" id="editModeToggle" onchange="toggleEditMode()">
+                    <label for="editModeToggle">Edit Mode</label>
+                </div>
+                <div class="edit-mode-indicator">Right-click map to copy coordinates</div>
+                <button class="export-btn" id="exportBtn" onclick="showExportModal()">Export Changes</button>
+            </div>
+
             <div class="legend-section">
                 <h3>Categories</h3>
                 <div id="categoryLegend"></div>
@@ -570,6 +866,28 @@
                     </div>
                 </div>
                 <div id="locationsListContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification for coordinate copy -->
+    <div class="coord-toast" id="coordToast">
+        <span class="coords" id="toastCoords"></span> copied!
+    </div>
+
+    <!-- Export Modal -->
+    <div class="export-modal-overlay" id="exportModalOverlay" onclick="closeExportModal(event)">
+        <div class="export-modal" onclick="event.stopPropagation()">
+            <div class="export-modal-header">
+                <h2>Export Map Edits</h2>
+                <button class="export-modal-close" onclick="closeExportModal()">&times;</button>
+            </div>
+            <div class="export-modal-body">
+                <pre id="exportContent"></pre>
+            </div>
+            <div class="export-modal-footer">
+                <button class="copy-export-btn" onclick="copyExportToClipboard()">Copy to Clipboard</button>
+                <button class="close-export-btn" onclick="closeExportModal()">Close</button>
             </div>
         </div>
     </div>
@@ -1541,6 +1859,76 @@
         const locationMarkers = {};
 
         // =====================================================
+        // PRODUCTION EDITING MODULE (Remove before delivery)
+        // =====================================================
+
+        // Session storage for edits
+        const sessionEdits = {};
+        let editModeEnabled = false;
+
+        // Get effective location data (with any session edits applied)
+        function getEffectiveLocation(index) {
+            const original = locations[index];
+            const edits = sessionEdits[index];
+            if (!edits) return { ...original };
+            return { ...original, ...edits.changes };
+        }
+
+        // Right-click coordinate capture
+        function initCoordinateCapture() {
+            map.on('contextmenu', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+                const coordString = `${lat}, ${lng}`;
+
+                // Copy to clipboard
+                navigator.clipboard.writeText(coordString).then(() => {
+                    showCoordToast(coordString);
+                }).catch(err => {
+                    console.error('Failed to copy coordinates:', err);
+                    showCoordToast(coordString + ' (copy failed)');
+                });
+            });
+        }
+
+        // Toast notification
+        function showCoordToast(coords) {
+            const toast = document.getElementById('coordToast');
+            const toastCoords = document.getElementById('toastCoords');
+            toastCoords.textContent = coords;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            editModeEnabled = document.getElementById('editModeToggle').checked;
+            const exportBtn = document.getElementById('exportBtn');
+
+            if (editModeEnabled) {
+                exportBtn.classList.add('visible');
+            } else {
+                exportBtn.classList.remove('visible');
+            }
+
+            // Update all visible popups
+            document.querySelectorAll('.popup-edit-btn').forEach(btn => {
+                if (editModeEnabled) {
+                    btn.classList.add('visible');
+                } else {
+                    btn.classList.remove('visible');
+                }
+            });
+        }
+
+        // Generate Google Maps URL from coordinates
+        function generateGoogleMapsUrl(lat, lng) {
+            return `https://maps.google.com/?q=${lat},${lng}`;
+        }
+
+        // =====================================================
         // MARKER CREATION FUNCTIONS
         // =====================================================
 
@@ -1584,48 +1972,60 @@
             });
         }
 
-        function createLocationPopup(loc) {
+        function createLocationPopup(loc, index) {
+            const effectiveLoc = typeof index === 'number' ? getEffectiveLocation(index) : loc;
+            const isEdited = typeof index === 'number' && sessionEdits[index];
+
             const badges = [];
-            if (loc.priority === "High") badges.push('<span class="popup-badge priority-high">HIGH PRIORITY</span>');
-            if (loc.priority === "Low") badges.push('<span class="popup-badge priority-low">SUPPORTING</span>');
-            if (loc.unesco) badges.push('<span class="popup-badge">🏛️ UNESCO</span>');
-            if (loc.okeeffe) badges.push('<span class="popup-badge">🎨 O\'Keeffe</span>');
-            if (loc.seasonal) badges.push('<span class="popup-badge">🌸 Seasonal</span>');
-            if (loc.drone) badges.push('<span class="popup-badge">🚁 Drone OK</span>');
+            if (effectiveLoc.priority === "High") badges.push('<span class="popup-badge priority-high">HIGH PRIORITY</span>');
+            if (effectiveLoc.priority === "Low") badges.push('<span class="popup-badge priority-low">SUPPORTING</span>');
+            if (effectiveLoc.unesco) badges.push('<span class="popup-badge">🏛️ UNESCO</span>');
+            if (effectiveLoc.okeeffe) badges.push('<span class="popup-badge">🎨 O\'Keeffe</span>');
+            if (effectiveLoc.seasonal) badges.push('<span class="popup-badge">🌸 Seasonal</span>');
+            if (effectiveLoc.drone) badges.push('<span class="popup-badge">🚁 Drone OK</span>');
+            if (isEdited) badges.push('<span class="edited-badge">EDITED</span>');
 
             let warningHtml = '';
-            if (loc.warning) {
+            if (effectiveLoc.warning) {
                 warningHtml = `<div class="popup-warning">⚠️ <strong>Production Warning:</strong> See notes below for critical access information.</div>`;
             }
 
-            const linksHtml = loc.googleMaps
-                ? `<div class="popup-links">
-                     <a href="${loc.googleMaps}" target="_blank" class="popup-link">Google Maps</a>
-                     <a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(loc.name + ' New Mexico')}" target="_blank" class="popup-link secondary">Images</a>
-                   </div>`
-                : '';
+            const googleMapsUrl = effectiveLoc.googleMaps || generateGoogleMapsUrl(effectiveLoc.coords[0], effectiveLoc.coords[1]);
+            const linksHtml = `<div class="popup-links">
+                     <a href="${googleMapsUrl}" target="_blank" class="popup-link" data-field="googleMapsLink">Google Maps</a>
+                     <a href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(effectiveLoc.name + ' New Mexico')}" target="_blank" class="popup-link secondary">Images</a>
+                   </div>`;
+
+            const editBtnClass = editModeEnabled ? 'popup-edit-btn visible' : 'popup-edit-btn';
 
             return `
-                <div class="popup-card">
+                <div class="popup-card" data-location-index="${index}">
                     <div class="popup-header">
-                        <h3>${loc.name}</h3>
+                        <h3>${effectiveLoc.name}</h3>
                         ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
                     </div>
-                    <div class="popup-body">
+                    <div class="popup-body" data-index="${index}">
                         <div class="popup-meta">
-                            <div><span class="icon">📍</span> <strong>Region:</strong> ${loc.region}</div>
-                            <div><span class="icon">🕐</span> <strong>Best Time:</strong> ${loc.bestTime}</div>
-                            <div><span class="icon">💰</span> <strong>Admission:</strong> ${loc.admission}</div>
-                            <div><span class="icon">📋</span> <strong>Permits:</strong> ${loc.permits}</div>
+                            <div><span class="icon">📍</span> <strong>Region:</strong> <span data-field="region">${effectiveLoc.region}</span></div>
+                            <div><span class="icon">📅</span> <strong>Dates:</strong> <span data-field="dates">${effectiveLoc.dates || 'N/A'}</span></div>
+                            <div><span class="icon">🕐</span> <strong>Best Time:</strong> <span data-field="bestTime">${effectiveLoc.bestTime}</span></div>
+                            <div><span class="icon">💰</span> <strong>Admission:</strong> <span data-field="admission">${effectiveLoc.admission}</span></div>
+                            <div><span class="icon">📋</span> <strong>Permits:</strong> <span data-field="permits">${effectiveLoc.permits}</span></div>
+                            <div><span class="icon">🌐</span> <strong>Coords:</strong> <span data-field="coords">${effectiveLoc.coords[0].toFixed(6)}, ${effectiveLoc.coords[1].toFixed(6)}</span></div>
                         </div>
                         ${warningHtml}
                         <div class="popup-section">
                             <h4>Key Features</h4>
-                            <p>${loc.keyFeatures}</p>
+                            <p data-field="keyFeatures">${effectiveLoc.keyFeatures}</p>
                         </div>
                         <div class="popup-section">
                             <h4>Production Notes</h4>
-                            <p>${loc.productionNotes}</p>
+                            <p data-field="productionNotes">${effectiveLoc.productionNotes}</p>
+                        </div>
+                        <button class="${editBtnClass}" onclick="startEditing(${index})">Edit Location</button>
+                        <div class="popup-edit-actions" data-index="${index}">
+                            <button class="popup-save-btn" onclick="saveEdits(${index})">Save</button>
+                            <button class="popup-cancel-btn" onclick="cancelEditing(${index})">Cancel</button>
                         </div>
                     </div>
                     ${linksHtml}
@@ -1676,7 +2076,7 @@
             const marker = L.marker(loc.coords, {
                 icon: createMarkerIcon(loc.category, loc)
             });
-            marker.bindPopup(createLocationPopup(loc), { maxWidth: 350 });
+            marker.bindPopup(createLocationPopup(loc, index), { maxWidth: 350 });
             marker.addTo(markerLayers[loc.category]);
             locationMarkers[index] = marker;
         });
@@ -1813,17 +2213,18 @@
         }
 
         function flyToLocation(index) {
-            const loc = locations[index];
+            const effectiveLoc = getEffectiveLocation(index);
             const marker = locationMarkers[index];
 
-            if (loc && marker) {
+            if (effectiveLoc && marker) {
                 // Ensure the category layer is visible
-                if (!categoryFilters[loc.category]) {
-                    toggleCategory(loc.category);
+                if (!categoryFilters[effectiveLoc.category]) {
+                    toggleCategory(effectiveLoc.category);
                 }
 
-                // Fly to the location
-                map.flyTo(loc.coords, 14, {
+                // Fly to the location (use effective coords in case they were edited)
+                const coords = effectiveLoc.coords;
+                map.flyTo(coords, 14, {
                     duration: 1
                 });
 
@@ -1834,10 +2235,207 @@
             }
         }
 
+        // =====================================================
+        // EDIT FUNCTIONS (Remove before delivery)
+        // =====================================================
+
+        function startEditing(index) {
+            const popupBody = document.querySelector(`.popup-body[data-index="${index}"]`);
+            if (!popupBody) return;
+
+            const effectiveLoc = getEffectiveLocation(index);
+            popupBody.classList.add('editing');
+
+            // Hide edit button, show save/cancel
+            const editBtn = popupBody.querySelector('.popup-edit-btn');
+            const editActions = popupBody.querySelector('.popup-edit-actions');
+            if (editBtn) editBtn.style.display = 'none';
+            if (editActions) editActions.classList.add('visible');
+
+            // Replace text spans with inputs
+            const fieldsConfig = {
+                dates: { type: 'input', value: effectiveLoc.dates || '' },
+                bestTime: { type: 'input', value: effectiveLoc.bestTime || '' },
+                admission: { type: 'input', value: effectiveLoc.admission || '' },
+                permits: { type: 'input', value: effectiveLoc.permits || '' },
+                coords: { type: 'coords', value: effectiveLoc.coords },
+                keyFeatures: { type: 'textarea', value: effectiveLoc.keyFeatures || '' },
+                productionNotes: { type: 'textarea', value: effectiveLoc.productionNotes || '' }
+            };
+
+            Object.entries(fieldsConfig).forEach(([field, config]) => {
+                const span = popupBody.querySelector(`[data-field="${field}"]`);
+                if (!span) return;
+
+                if (config.type === 'coords') {
+                    span.innerHTML = `
+                        <div class="editable-coords">
+                            <input type="text" class="editable-field" data-edit-field="lat" value="${config.value[0].toFixed(6)}" placeholder="Latitude">
+                            <input type="text" class="editable-field" data-edit-field="lng" value="${config.value[1].toFixed(6)}" placeholder="Longitude">
+                        </div>
+                    `;
+                } else if (config.type === 'textarea') {
+                    span.innerHTML = `<textarea class="editable-field" data-edit-field="${field}">${config.value}</textarea>`;
+                } else {
+                    span.innerHTML = `<input type="text" class="editable-field" data-edit-field="${field}" value="${config.value}">`;
+                }
+            });
+        }
+
+        function saveEdits(index) {
+            const popupBody = document.querySelector(`.popup-body[data-index="${index}"]`);
+            if (!popupBody) return;
+
+            const original = locations[index];
+            const changes = {};
+
+            // Gather all changed values
+            const fields = ['dates', 'bestTime', 'admission', 'permits', 'keyFeatures', 'productionNotes'];
+            fields.forEach(field => {
+                const input = popupBody.querySelector(`[data-edit-field="${field}"]`);
+                if (input && input.value !== (original[field] || '')) {
+                    changes[field] = input.value;
+                }
+            });
+
+            // Handle coordinates separately
+            const latInput = popupBody.querySelector('[data-edit-field="lat"]');
+            const lngInput = popupBody.querySelector('[data-edit-field="lng"]');
+            if (latInput && lngInput) {
+                const newLat = parseFloat(latInput.value);
+                const newLng = parseFloat(lngInput.value);
+                if (!isNaN(newLat) && !isNaN(newLng)) {
+                    if (newLat !== original.coords[0] || newLng !== original.coords[1]) {
+                        changes.coords = [newLat, newLng];
+                        // Auto-update Google Maps URL
+                        changes.googleMaps = generateGoogleMapsUrl(newLat, newLng);
+                    }
+                }
+            }
+
+            // Store edits if there are any changes
+            if (Object.keys(changes).length > 0) {
+                sessionEdits[index] = {
+                    name: original.name,
+                    originalIndex: index,
+                    changes: changes
+                };
+
+                // If coordinates changed, move the marker
+                if (changes.coords) {
+                    const marker = locationMarkers[index];
+                    if (marker) {
+                        marker.setLatLng(changes.coords);
+                    }
+                }
+            }
+
+            // Refresh the popup content
+            refreshPopup(index);
+        }
+
+        function cancelEditing(index) {
+            refreshPopup(index);
+        }
+
+        function refreshPopup(index) {
+            const marker = locationMarkers[index];
+            const loc = locations[index];
+            if (marker && loc) {
+                marker.setPopupContent(createLocationPopup(loc, index));
+            }
+        }
+
+        // =====================================================
+        // EXPORT FUNCTIONS (Remove before delivery)
+        // =====================================================
+
+        function showExportModal() {
+            const overlay = document.getElementById('exportModalOverlay');
+            const content = document.getElementById('exportContent');
+
+            const exportText = generateExportText();
+            content.textContent = exportText;
+
+            overlay.classList.add('visible');
+        }
+
+        function closeExportModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            const overlay = document.getElementById('exportModalOverlay');
+            overlay.classList.remove('visible');
+        }
+
+        function generateExportText() {
+            const editKeys = Object.keys(sessionEdits);
+            if (editKeys.length === 0) {
+                return 'No edits have been made yet.\n\nMake changes to locations using the Edit button on each card, then export your changes here.';
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            let text = `**CLAUDE CODE INSTRUCTION: Update the interactive map (index.html) with the following changes. For each location listed, find the corresponding entry in the \`locations\` array and update the coords (lat/lng) and any other fields shown.**\n\n`;
+            text += `## MAP EDITS - ${today}\n\n`;
+
+            editKeys.sort((a, b) => parseInt(a) - parseInt(b));
+
+            editKeys.forEach(indexStr => {
+                const edit = sessionEdits[indexStr];
+                const index = parseInt(indexStr);
+
+                text += `### Location #${index}: ${edit.name}\n`;
+
+                const changes = edit.changes;
+                const fieldLabels = {
+                    coords: 'Coordinates',
+                    googleMaps: 'Google Maps URL',
+                    dates: 'Dates',
+                    bestTime: 'Best Time',
+                    admission: 'Admission',
+                    permits: 'Permits',
+                    keyFeatures: 'Key Features',
+                    productionNotes: 'Production Notes'
+                };
+
+                // Output coordinates first if changed
+                if (changes.coords) {
+                    text += `- **Coordinates:** ${changes.coords[0].toFixed(6)}, ${changes.coords[1].toFixed(6)}\n`;
+                    text += `- **Google Maps URL:** ${changes.googleMaps}\n`;
+                }
+
+                // Output other fields
+                Object.entries(changes).forEach(([field, value]) => {
+                    if (field === 'coords' || field === 'googleMaps') return;
+                    const label = fieldLabels[field] || field;
+                    text += `- **${label}:** ${value}\n`;
+                });
+
+                text += '\n';
+            });
+
+            return text.trim();
+        }
+
+        function copyExportToClipboard() {
+            const content = document.getElementById('exportContent').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                const btn = document.querySelector('.copy-export-btn');
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
         // Initialize
         buildLegend();
         updateStats();
         buildLocationsSection();
+        initCoordinateCapture();
 
         // Auto-collapse sidebar on mobile
         if (window.innerWidth < 768) {
