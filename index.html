@@ -882,6 +882,132 @@
             font-weight: 600;
             text-transform: uppercase;
         }
+
+        /* Itinerary Section Styles */
+        .itinerary-section {
+            background: #f8f5f0;
+            border: 1px solid #e0d6c8;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .itinerary-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #8B4513;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+        .itinerary-day {
+            margin-bottom: 4px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: white;
+            border: 1px solid #eee;
+        }
+        .itinerary-day-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .itinerary-day-header:hover {
+            background: #f5f5f5;
+        }
+        .itinerary-day-header .expand-icon {
+            margin-right: 8px;
+            font-size: 10px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+        .itinerary-day.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+        .itinerary-day-header .day-label {
+            flex: 1;
+            font-weight: 600;
+            color: #8B4513;
+        }
+        .itinerary-day-header .day-date {
+            font-weight: 400;
+            color: #666;
+            margin-left: 5px;
+        }
+        .itinerary-day-header .stop-count {
+            font-size: 10px;
+            background: #8B4513;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+        .itinerary-day-locations {
+            display: none;
+            padding: 4px 0;
+            border-top: 1px solid #eee;
+        }
+        .itinerary-day.expanded .itinerary-day-locations {
+            display: block;
+        }
+        .itinerary-location {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px 6px 26px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #444;
+        }
+        .itinerary-location:hover {
+            background: #f5f5f5;
+        }
+        .itinerary-location .cat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+        .itinerary-location .loc-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .itinerary-location.high-priority .loc-name {
+            font-weight: 600;
+        }
+        .itinerary-day.optional .day-label {
+            color: #888;
+        }
+        .itinerary-day.optional .stop-count {
+            background: #888;
+        }
+
+        /* Multiple days checkboxes */
+        .multi-day-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .multi-day-checkboxes label {
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: normal;
+            text-transform: none;
+            cursor: pointer;
+        }
+        .multi-day-checkboxes input {
+            margin-right: 4px;
+            width: 14px;
+            height: 14px;
+        }
     </style>
 </head>
 <body>
@@ -904,6 +1030,12 @@
                 </div>
                 <div class="edit-mode-indicator">Right-click map to copy coordinates</div>
                 <button class="export-btn" id="exportBtn" onclick="showExportModal()">Export Changes</button>
+            </div>
+
+            <!-- Itinerary Navigation -->
+            <div class="itinerary-section">
+                <h3>📅 Itinerary</h3>
+                <div id="itineraryContainer"></div>
             </div>
 
             <div class="legend-section">
@@ -982,6 +1114,21 @@
 
         const categoryFilters = {};
         Object.keys(categories).forEach(cat => categoryFilters[cat] = true);
+
+        // Trip dates for itinerary dropdown
+        const tripDates = [
+            { value: "Day 1 - March 15", label: "Day 1 - March 15", day: 1 },
+            { value: "Day 2 - March 16", label: "Day 2 - March 16", day: 2 },
+            { value: "Day 3 - March 17", label: "Day 3 - March 17", day: 3 },
+            { value: "Day 4 - March 18", label: "Day 4 - March 18", day: 4 },
+            { value: "Day 5 - March 19", label: "Day 5 - March 19", day: 5 },
+            { value: "Day 6 - March 20", label: "Day 6 - March 20", day: 6 },
+            { value: "Day 7 - March 21", label: "Day 7 - March 21", day: 7 },
+            { value: "Day 8 - March 22", label: "Day 8 - March 22", day: 8 },
+            { value: "Day 9 - March 23", label: "Day 9 - March 23", day: 9 },
+            { value: "Multiple Days", label: "Multiple Days", day: 0 },
+            { value: "Optional", label: "Optional", day: -1 }
+        ];
 
         const regionalOverviews = [
             {
@@ -2290,6 +2437,130 @@
             });
         }
 
+        // =====================================================
+        // ITINERARY FUNCTIONS
+        // =====================================================
+
+        function buildItinerary() {
+            const container = document.getElementById('itineraryContainer');
+            container.innerHTML = '';
+
+            // Group locations by their assigned day
+            const dayGroups = {};
+
+            // Initialize day groups
+            tripDates.forEach(td => {
+                dayGroups[td.value] = {
+                    label: td.label,
+                    day: td.day,
+                    locations: []
+                };
+            });
+
+            // Assign locations to days based on their dates field
+            locations.forEach((loc, index) => {
+                const effectiveLoc = getEffectiveLocation(index);
+                const dateValue = effectiveLoc.dates || 'Optional';
+
+                // Check if it matches a trip date
+                let matched = false;
+                for (const td of tripDates) {
+                    if (dateValue.includes(td.value) || dateValue === td.value) {
+                        dayGroups[td.value].locations.push({ ...effectiveLoc, originalIndex: index });
+                        matched = true;
+                        break;
+                    }
+                }
+
+                // If no match, put in Optional
+                if (!matched) {
+                    dayGroups['Optional'].locations.push({ ...effectiveLoc, originalIndex: index });
+                }
+            });
+
+            // Build HTML for each day that has locations
+            tripDates.forEach(td => {
+                const group = dayGroups[td.value];
+                if (group.locations.length === 0) return;
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `itinerary-day ${td.value === 'Optional' ? 'optional' : ''}`;
+                dayDiv.setAttribute('data-day', td.value);
+
+                const locationsHtml = group.locations.map(loc => {
+                    const cat = categories[loc.category] || { color: '#888' };
+                    const isHighPriority = loc.priority === "High" || loc.priorityLevel === "High Priority";
+                    return `
+                        <div class="itinerary-location ${isHighPriority ? 'high-priority' : ''}" onclick="flyToLocationFromItinerary(${loc.originalIndex})">
+                            <span class="cat-dot" style="background: ${cat.color};"></span>
+                            <span class="loc-name">${loc.name}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                dayDiv.innerHTML = `
+                    <div class="itinerary-day-header" onclick="toggleItineraryDay('${td.value}')">
+                        <span class="expand-icon">▶</span>
+                        <span class="day-label">${td.day > 0 ? 'Day ' + td.day : td.label}</span>
+                        ${td.day > 0 ? `<span class="day-date">- ${td.label.split(' - ')[1]}</span>` : ''}
+                        <span class="stop-count">${group.locations.length}</span>
+                    </div>
+                    <div class="itinerary-day-locations">
+                        ${locationsHtml}
+                    </div>
+                `;
+
+                container.appendChild(dayDiv);
+            });
+        }
+
+        function toggleItineraryDay(dayValue) {
+            const dayDiv = document.querySelector(`.itinerary-day[data-day="${dayValue}"]`);
+            if (!dayDiv) return;
+
+            const wasExpanded = dayDiv.classList.contains('expanded');
+            dayDiv.classList.toggle('expanded');
+
+            // If expanding, zoom to fit all locations for this day
+            if (!wasExpanded) {
+                zoomToDay(dayValue);
+            }
+        }
+
+        function zoomToDay(dayValue) {
+            const dayLocations = [];
+
+            locations.forEach((loc, index) => {
+                const effectiveLoc = getEffectiveLocation(index);
+                const dateValue = effectiveLoc.dates || 'Optional';
+
+                if (dateValue.includes(dayValue) || dateValue === dayValue) {
+                    dayLocations.push(effectiveLoc.coords);
+                }
+            });
+
+            if (dayLocations.length === 0) return;
+
+            if (dayLocations.length === 1) {
+                map.flyTo(dayLocations[0], 12, { duration: 1 });
+            } else {
+                const bounds = L.latLngBounds(dayLocations);
+                map.flyToBounds(bounds, { padding: [50, 50], duration: 1 });
+            }
+        }
+
+        function flyToLocationFromItinerary(index) {
+            flyToLocation(index);
+
+            // On mobile, collapse sidebar after selection
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('collapsed')) {
+                    toggleSidebar();
+                }
+            }
+        }
+
         function toggleCategoryGroup(category) {
             const group = document.querySelector(`.category-group[data-category="${category}"]`);
             if (group) {
@@ -2356,7 +2627,7 @@
 
             // Replace text spans with inputs
             const fieldsConfig = {
-                dates: { type: 'input', value: effectiveLoc.dates || '' },
+                dates: { type: 'dates-dropdown', value: effectiveLoc.dates || '' },
                 bestTime: { type: 'input', value: effectiveLoc.bestTime || '' },
                 admission: { type: 'input', value: effectiveLoc.admission || '' },
                 permits: { type: 'input', value: effectiveLoc.permits || '' },
@@ -2376,6 +2647,13 @@
                             <input type="text" class="editable-field" data-edit-field="lng" value="${config.value[1].toFixed(6)}" placeholder="Longitude">
                         </div>
                     `;
+                } else if (config.type === 'dates-dropdown') {
+                    // Create dates dropdown
+                    const currentValue = config.value;
+                    const optionsHtml = tripDates.map(td =>
+                        `<option value="${td.value}" ${currentValue === td.value || currentValue.includes(td.value) ? 'selected' : ''}>${td.label}</option>`
+                    ).join('');
+                    span.innerHTML = `<select class="editable-field" data-edit-field="${field}">${optionsHtml}</select>`;
                 } else if (config.type === 'textarea') {
                     span.innerHTML = `<textarea class="editable-field" data-edit-field="${field}">${config.value}</textarea>`;
                 } else {
@@ -2544,6 +2822,11 @@
                         marker.setLatLng(changes.coords);
                     }
                 }
+
+                // If dates changed, rebuild the itinerary
+                if (changes.dates) {
+                    buildItinerary();
+                }
             }
 
             // Refresh the popup content
@@ -2671,6 +2954,7 @@
         buildLegend();
         updateStats();
         buildLocationsSection();
+        buildItinerary();
         initCoordinateCapture();
 
         // Auto-collapse sidebar on mobile
