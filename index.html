@@ -419,6 +419,31 @@
             border: 1px solid #ffc107;
         }
 
+        .shoot-time-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .shoot-time-badge.morning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .shoot-time-badge.afternoon {
+            background: #dc2626;
+            color: white;
+        }
+
+        .shoot-time-badge.fixed {
+            background: #6b7280;
+            color: white;
+        }
+
         .popup-body {
             padding: 12px 15px;
         }
@@ -1778,7 +1803,8 @@
                 productionNotes: "Day 5 -- March 22, 2026. Full day. OM-3 Creative Dial / O'Keeffe concept: build custom in-camera filters approximating O'Keeffe's palette, shoot at her exact painting locations. See the four 🎨 painting spot pins for specific vantages. Commercial permit ~$250. Contact: David or Andie Manzanares, 505-470-2495, production@ghostranch.org. NOTE: O'Keeffe's house (Rancho de los Burros) is O'Keeffe Foundation property -- Ghost Ranch cannot grant access to it.",
                 googleMaps: "https://maps.google.com/?q=Ghost+Ranch+Abiquiu",
                 priority: "High",
-                okeeffe: true
+                okeeffe: true,
+                shootTime: { type: "afternoon", label: "🔆 Best: Afternoon — south-facing Kitchen Mesa cliffs, Pedernal horizon" }
             },
             {
                 name: "🎨 Kitchen Mesa / Red & Yellow Cliffs (O'Keeffe Painting Spot)",
@@ -1793,7 +1819,8 @@
                 productionNotes: "PRIORITY 1. Public trail -- no restricted-grounds access needed. Crew aims upward from base of scree slopes, medium-telephoto angled sharply up for horizon-less framing. COORDINATE NOTE: Trailhead coordinates (HIGH confidence from AllTrails/Gaia GPS). Exact painting vantage is along the trail -- field-scout with laminated reproduction of Red and Yellow Cliffs (1940).",
                 googleMaps: "https://maps.google.com/?q=Kitchen+Mesa+Trail+Ghost+Ranch",
                 priority: "High",
-                okeeffe: true
+                okeeffe: true,
+                shootTime: { type: "afternoon", label: "🔆 Best: Late Afternoon — south/southwest-facing cliffs ablaze in warm western light" }
             },
             {
                 name: "🎨 Chimney Rock / Cliff Chimneys (O'Keeffe Painting Spot)",
@@ -1808,7 +1835,8 @@
                 productionNotes: "PRIORITY 3. Most field-confirmed public vantage on the property. Shoot in afternoon for warm direct light on west-facing formations. COORDINATE NOTE: Chimney Rock formation coordinates (HIGH confidence from geologic databases and AllTrails). Trail vantage for the painting is field-confirmed by Ghost Ranch tour guides.",
                 googleMaps: "https://maps.google.com/?q=Chimney+Rock+Trail+Ghost+Ranch",
                 priority: "High",
-                okeeffe: true
+                okeeffe: true,
+                shootTime: { type: "afternoon", label: "🔆 Best: Afternoon — west-facing formations catch warm direct light" }
             },
             {
                 name: "🎨 Orphan Mesa Picnic Area -- Pedernal Vantage (O'Keeffe Painting Spot)",
@@ -1823,7 +1851,8 @@
                 productionNotes: "PRIORITY 2 fallback (house patio is O'Keeffe Foundation property, not accessible for commercial filming). Use 200-400mm telephoto to compress the 10-12 mile distance and match the scale in her paintings -- standard wide-angle will make Pedernal look tiny. COORDINATE NOTE: MEDIUM confidence. General Ghost Ranch area; exact picnic area coordinates not found in public databases. Scout US-84 just east of Ghost Ranch entrance for the pullout.",
                 googleMaps: "https://maps.google.com/?q=Orphan+Mesa+Picnic+Area+Ghost+Ranch+US84",
                 priority: "High",
-                okeeffe: true
+                okeeffe: true,
+                shootTime: { type: "morning", label: "🌅 Best: Early Morning — east face alpenglow at dawn, Pedernal catches first light" }
             },
             {
                 name: "🎨 Plaza Blanca V-Notch (O'Keeffe Painting Spot -- HOLD)",
@@ -1839,7 +1868,8 @@
                 googleMaps: "https://maps.google.com/?q=Plaza+Blanca+Abiquiu+NM",
                 priority: "Low",
                 okeeffe: true,
-                warning: true
+                warning: true,
+                shootTime: { type: "morning", label: "🌅 Best: Early Morning — sidelighting on white arroyo formations" }
             },
             {
                 name: "Abiquiú",
@@ -1870,7 +1900,8 @@
                 googleMaps: "https://maps.google.com/?q=Plaza+Blanca+Abiquiu",
                 priority: "High",
                 okeeffe: true,
-                warning: true
+                warning: true,
+                shootTime: { type: "morning", label: "🌅 Best: Early Morning — sidelighting on white arroyo formations" }
             },
             {
                 name: "Abiquiú Lake",
@@ -1885,7 +1916,8 @@
                 productionNotes: "Colorful cliff reflections in still water, O'Keeffe-style landscape compositions, dramatic sky reflections, desert reservoir juxtaposition.",
                 googleMaps: "https://maps.google.com/?q=Abiquiu+Lake",
                 priority: "Low",
-                okeeffe: true
+                okeeffe: true,
+                shootTime: { type: "morning", label: "🌅 Best: Early Morning — calm water reflections, east-facing cliffs catch first light" }
             },
             {
                 name: "Jerred Zegelis (Potential Collaborator)",
@@ -2388,9 +2420,16 @@
 
             const editBtnClass = editModeEnabled ? 'popup-edit-btn visible' : 'popup-edit-btn';
 
+            let shootTimeBadgeHtml = '';
+            if (effectiveLoc.shootTime) {
+                const st = effectiveLoc.shootTime;
+                shootTimeBadgeHtml = `<div class="shoot-time-badge ${st.type}">${st.label}</div>`;
+            }
+
             return `
                 <div class="popup-card" data-location-index="${index}">
                     <div class="popup-header">
+                        ${shootTimeBadgeHtml}
                         <h3>${effectiveLoc.name}</h3>
                         ${badges.length ? `<div class="badges">${badges.join('')}</div>` : ''}
                     </div>
