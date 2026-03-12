@@ -2692,7 +2692,7 @@
                 `).join('');
 
                 group.innerHTML = `
-                    <div class="category-group-header" onclick="toggleCategoryGroup('${category}')">
+                    <div class="category-group-header" onclick="toggleCategoryGroup('${category.replace(/'/g, "\\'")}')">
                         <span class="expand-icon">▶</span>
                         <span class="cat-color" style="background: ${cat.color};"></span>
                         <span class="cat-name">${category}</span>
